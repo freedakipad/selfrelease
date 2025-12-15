@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>服务器测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 50px;
+            background: #f0f0f0;
+        }
+        .test-box {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 { color: #2c3e50; }
+        .status { color: green; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="test-box">
+        <h1>✅ 服务器运行正常！</h1>
+        <p class="status">如果你能看到这个页面，说明服务器工作正常。</p>
+        <p>当前时间: <span id="time"></span></p>
+        <p><a href="index.html">返回主页</a></p>
+    </div>
+    <script>
+        document.getElementById('time').textContent = new Date().toLocaleString('zh-CN');
+    </script>
+</body>
+</html>
+
+
+
+
+
+

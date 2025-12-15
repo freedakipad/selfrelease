@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>自在释放 - 圣多纳释放法</title>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <!-- 注意：Tailwind CDN 仅用于开发环境，生产环境应使用 PostCSS 插件 -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&family=ZCOOL+XiaoWei&family=Long+Cang&family=Noto+Sans+SC:wght@300;400;500&display=swap" rel="stylesheet">
+    <script src="music.js"></script>
+    <script src="navbar.js"></script>
+    <style>
+        body {
+            font-family: 'ZCOOL XiaoWei', 'Noto Sans SC', sans-serif;
+            background-color: #F5F1EB;
+            overflow-x: hidden;
+        }
+        .serif-font {
+            font-family: 'Ma Shan Zheng', 'Long Cang', cursive;
+        }
+        .hero-bg {
+            background-image: url('./resources/app-background.png');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+        }
+        .glass-effect {
+            backdrop-filter: blur(10px);
+            background: rgba(245, 241, 235, 0.8);
+        }
+        .emotion-card {
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        .emotion-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 25px rgba(232, 165, 152, 0.3);
+        }
+        .emotion-card.selected {
+            background: #E8A598;
+            color: white;
+            transform: scale(1.05);
+        }
+        .body-sensation {
+            transition: all 0.3s ease;
+        }
+        .body-sensation.selected {
+            background: #E8A598;
+            color: white;
+            transform: scale(1.05);
+            border-color: #E8A598;
+        }
+        .body-sensation.selected span {
+            color: white;
+        }
+        .breathing-animation {
+            animation: breathe 4s ease-in-out infinite;
+        }
+        @keyframes breathe {
+            0%, 100% { transform: scale(1); opacity: 0.7; }
+            50% { transform: scale(1.1); opacity: 1; }
+        }
+        .particle-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }
+        .release-step {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.6s ease, visibility 0.6s;
+        }
+        .release-step.active {
+            opacity: 1;
+            visibility: visible;
+            z-index: 1;
+        }
+        
+        /* 移动端适配 */
+        @media (max-width: 768px) {
+            nav .flex.space-x-8 {
+                display: none;
+            }
+            .mobile-nav {
+                display: flex !important;
+            }
+            main {
+                padding-bottom: 90px;
+            }
+            .hero-bg {
+                background-attachment: scroll;
+            }
+            /* 移动端音乐按钮样式调整 */
+            #musicControlBtn {
+                width: 40px;
+                height: 40px;
+            }
+            #musicIcon {
+                width: 18px;
+                height: 18px;
+            }
+        }
+        
+        /* 移动端底部导航 */
+        .mobile-nav {
+            display: none;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(245, 241, 235, 0.95);
+            backdrop-filter: blur(10px);
+            border-top: 1px solid rgba(255,255,255,0.3);
+            padding: 8px 0;
+            z-index: 50;
+        }
+        .mobile-nav a {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 6px;
+            color: #6B7280;
+            font-size: 10px;
+            text-decoration: none;
+        }
+        .mobile-nav a.active {
+            color: #F97316;
+        }
+        .mobile-nav a span:first-child {
+            font-size: 20px;
+            margin-bottom: 2px;
+        }
+        /* 加载提示 */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: #F5F1EB;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            transition: opacity 0.5s ease;
+        }
+        .loading-overlay.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid #E5E7EB;
+            border-top-color: #F97316;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .loading-text {
+            margin-top: 20px;
+            color: #6B7280;
+            font-size: 16px;
+        }
+        /* 音乐控制按钮样式已移至 navbar.js */
+        #musicIcon.muted {
+            opacity: 0.4;
+        }
+        #musicIcon svg {
+            width: 100%;
+            height: 100%;
+            fill: currentColor;
+        }
+    </style>
+</head>
+<body class="min-h-screen">
+    <!-- 加载提示 -->
+    <div id="loading-overlay" class="loading-overlay">
+        <div class="loading-spinner"></div>
+        <div class="loading-text">正在加载资源...</div>
+    </div>
+    <!-- 粒子背景 -->
+    <div id="particle-container" class="particle-bg"></div>
+    
+    <!-- 导航栏 -->
+    <nav id="topNav" class="fixed top-0 left-0 right-0 z-50 glass-effect border-b border-white/20">
+        <div class="max-w-6xl mx-auto px-6 py-3">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 rounded-full bg-gradient-to-br from-orange-200 to-pink-200 flex items-center justify-center">
+                        <span class="text-2xl">🕊️</span>
+                    </div>
+                    <h1 class="serif-font text-2xl font-bold text-gray-700">自在释放</h1>
+                </div>
+                <div class="flex items-center space-x-8">
+                    <a href="index.html" class="text-gray-800 font-semibold">释放</a>
+                    <a href="journal.html" class="text-gray-600 font-semibold hover:text-orange-500 transition-colors">日记</a>
+                    <a href="wisdom.html" class="text-gray-600 font-semibold hover:text-orange-500 transition-colors">智慧</a>
+                    <a href="chat.html" class="text-gray-600 font-semibold hover:text-orange-500 transition-colors">对话</a>
+                    <a href="settings.html" class="text-gray-600 font-semibold hover:text-orange-500 transition-colors">设置</a>
+                </div>
+                <!-- 音乐控制按钮 - 独立显示，移动端也可见 -->
+                <button id="musicControlBtn" title="背景音乐" aria-label="播放/暂停背景音乐">
+                    <span id="musicIcon" class="text-gray-700">
+                        <!-- 播放图标 -->
+                        <svg id="playIcon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M8 5V19L19 12L8 5Z" fill="currentColor"/>
+                        </svg>
+                        <!-- 暂停图标 -->
+                        <svg id="pauseIcon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="display: none;">
+                            <rect x="6" y="4" width="4" height="16" fill="currentColor"/>
+                            <rect x="14" y="4" width="4" height="16" fill="currentColor"/>
+                        </svg>
+                    </span>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 主要内容 -->
+    <main class="pt-16">
+        <!-- Hero区域 -->
+        <section id="heroSection" class="hero-bg flex items-center justify-center relative" style="min-height: calc(100vh - 64px);">
+            <div class="absolute inset-0 bg-gradient-to-b from-transparent to-orange-50/30"></div>
+            <div class="relative z-10 text-center max-w-6xl mx-auto px-6">
+                <div class="mb-3 md:mb-4">
+                    <img src="./resources/meditation-hero.png" alt="冥想治愈" class="w-32 h-32 md:w-48 md:h-48 mx-auto rounded-full shadow-2xl breathing-animation">
+                </div>
+                <h2 class="serif-font text-2xl md:text-3xl font-bold text-gray-800 mb-4 md:mb-5 leading-tight">
+                    与自己和解<br>
+                    <span class="text-orange-500">释放内在的自由</span>
+                </h2>
+                <button id="startReleaseBtn" class="bg-gradient-to-r from-orange-400 to-pink-400 text-white px-10 py-3 md:px-12 md:py-4 rounded-full text-lg md:text-xl font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300">
+                    开始释放之旅
+                </button>
+            </div>
+        </section>
+
+        <!-- 情绪识别区域 -->
+        <section id="emotionSection" class="py-8 px-6 hidden min-h-screen">
+            <div class="max-w-6xl mx-auto">
+                <div class="text-center mb-8">
+                    <h3 class="serif-font text-3xl font-bold text-gray-800 mb-2">此刻的感受是什么？</h3>
+                    <p class="text-base text-gray-600">选择你正在经历的情绪，让我们开始这段自我对话的旅程</p>
+                </div>
+
+                <!-- 情绪选择卡片 -->
+                <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mb-8">
+                    <div class="emotion-card glass-effect rounded-2xl p-5 text-center border border-white/30" data-emotion="anxiety">
+                        <div class="text-4xl mb-2">😰</div>
+                        <h4 class="font-semibold text-gray-700">焦虑</h4>
+                        <p class="text-xs text-gray-500 mt-1">内心的不安</p>
+                    </div>
+                    <div class="emotion-card glass-effect rounded-2xl p-5 text-center border border-white/30" data-emotion="anger">
+                        <div class="text-4xl mb-2">😠</div>
+                        <h4 class="font-semibold text-gray-700">愤怒</h4>
+                        <p class="text-xs text-gray-500 mt-1">被激发的情绪</p>
+                    </div>
+                    <div class="emotion-card glass-effect rounded-2xl p-5 text-center border border-white/30" data-emotion="sadness">
+                        <div class="text-4xl mb-2">😢</div>
+                        <h4 class="font-semibold text-gray-700">悲伤</h4>
+                        <p class="text-xs text-gray-500 mt-1">失落与伤心</p>
+                    </div>
+                    <div class="emotion-card glass-effect rounded-2xl p-5 text-center border border-white/30" data-emotion="fear">
+                        <div class="text-4xl mb-2">😨</div>
+                        <h4 class="font-semibold text-gray-700">恐惧</h4>
+                        <p class="text-xs text-gray-500 mt-1">未知的担忧</p>
+                    </div>
+                    <div class="emotion-card glass-effect rounded-2xl p-5 text-center border border-white/30" data-emotion="insecurity">
+                        <div class="text-4xl mb-2">😔</div>
+                        <h4 class="font-semibold text-gray-700">自卑</h4>
+                        <p class="text-xs text-gray-500 mt-1">自我怀疑</p>
+                    </div>
+                    <div class="emotion-card glass-effect rounded-2xl p-5 text-center border border-white/30" data-emotion="guilt">
+                        <div class="text-4xl mb-2">😞</div>
+                        <h4 class="font-semibold text-gray-700">愧疚</h4>
+                        <p class="text-xs text-gray-500 mt-1">内心的负担</p>
+                    </div>
+                    <div class="emotion-card glass-effect rounded-2xl p-5 text-center border border-white/30" data-emotion="frustration">
+                        <div class="text-4xl mb-2">😤</div>
+                        <h4 class="font-semibold text-gray-700">挫败</h4>
+                        <p class="text-xs text-gray-500 mt-1">事与愿违</p>
+                    </div>
+                    <div class="emotion-card glass-effect rounded-2xl p-5 text-center border border-white/30" data-emotion="lonely">
+                        <div class="text-4xl mb-2">😶</div>
+                        <h4 class="font-semibold text-gray-700">孤独</h4>
+                        <p class="text-xs text-gray-500 mt-1">无人理解</p>
+                    </div>
+                    <div class="emotion-card glass-effect rounded-2xl p-5 text-center border border-white/30" data-emotion="jealousy">
+                        <div class="text-4xl mb-2">😒</div>
+                        <h4 class="font-semibold text-gray-700">嫉妒</h4>
+                        <p class="text-xs text-gray-500 mt-1">对比与不甘</p>
+                    </div>
+                    <div class="emotion-card glass-effect rounded-2xl p-5 text-center border border-white/30" data-emotion="shame">
+                        <div class="text-4xl mb-2">😳</div>
+                        <h4 class="font-semibold text-gray-700">羞愧</h4>
+                        <p class="text-xs text-gray-500 mt-1">难以启齿</p>
+                    </div>
+                    <div class="emotion-card glass-effect rounded-2xl p-5 text-center border border-white/30" data-emotion="pressure">
+                        <div class="text-4xl mb-2">😫</div>
+                        <h4 class="font-semibold text-gray-700">压力</h4>
+                        <p class="text-xs text-gray-500 mt-1">喘不过气</p>
+                    </div>
+                    <div class="emotion-card glass-effect rounded-2xl p-5 text-center border border-white/30" data-emotion="confused">
+                        <div class="text-4xl mb-2">😕</div>
+                        <h4 class="font-semibold text-gray-700">困惑</h4>
+                        <p class="text-xs text-gray-500 mt-1">迷茫无措</p>
+                    </div>
+                    <div class="emotion-card glass-effect rounded-2xl p-5 text-center border border-white/30" data-emotion="helpless">
+                        <div class="text-4xl mb-2">😩</div>
+                        <h4 class="font-semibold text-gray-700">无助</h4>
+                        <p class="text-xs text-gray-500 mt-1">无力改变</p>
+                    </div>
+                    <div class="emotion-card glass-effect rounded-2xl p-5 text-center border border-white/30" data-emotion="regret">
+                        <div class="text-4xl mb-2">😣</div>
+                        <h4 class="font-semibold text-gray-700">后悔</h4>
+                        <p class="text-xs text-gray-500 mt-1">追悔莫及</p>
+                    </div>
+                    <div class="emotion-card glass-effect rounded-2xl p-5 text-center border border-white/30" data-emotion="restless">
+                        <div class="text-4xl mb-2">😖</div>
+                        <h4 class="font-semibold text-gray-700">烦躁</h4>
+                        <p class="text-xs text-gray-500 mt-1">静不下来</p>
+                    </div>
+                    <div class="emotion-card glass-effect rounded-2xl p-5 text-center border border-white/30" data-emotion="custom">
+                        <div class="text-4xl mb-2">💭</div>
+                        <h4 class="font-semibold text-gray-700">其他</h4>
+                        <p class="text-xs text-gray-500 mt-1">自定义</p>
+                    </div>
+                </div>
+
+                <!-- 自定义情绪输入 -->
+                <div id="customEmotionInput" class="hidden mb-8 text-center">
+                    <input type="text" id="customEmotionText" placeholder="描述你的情绪..." class="w-full max-w-md px-6 py-3 rounded-full border border-gray-300 focus:outline-none focus:ring-2 focus:ring-orange-300 text-center text-base">
+                </div>
+
+                <!-- 身体感受关联 -->
+                <div class="mb-6">
+                    <h4 class="text-xl font-semibold text-gray-800 text-center mb-4">身体有什么感受？</h4>
+                    <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3 max-w-5xl mx-auto">
+                        <div class="body-sensation glass-effect rounded-xl p-3 text-center cursor-pointer border border-white/30 hover:bg-orange-100 transition-colors" data-sensation="chest">
+                            <div class="text-2xl mb-1">💔</div>
+                            <span class="text-gray-700 text-sm">胸闷压抑</span>
+                        </div>
+                        <div class="body-sensation glass-effect rounded-xl p-3 text-center cursor-pointer border border-white/30 hover:bg-orange-100 transition-colors" data-sensation="head">
+                            <div class="text-2xl mb-1">🤕</div>
+                            <span class="text-gray-700 text-sm">头部紧绷</span>
+                        </div>
+                        <div class="body-sensation glass-effect rounded-xl p-3 text-center cursor-pointer border border-white/30 hover:bg-orange-100 transition-colors" data-sensation="stomach">
+                            <div class="text-2xl mb-1">😣</div>
+                            <span class="text-gray-700 text-sm">胃部不适</span>
+                        </div>
+                        <div class="body-sensation glass-effect rounded-xl p-3 text-center cursor-pointer border border-white/30 hover:bg-orange-100 transition-colors" data-sensation="shoulder">
+                            <div class="text-2xl mb-1">💪</div>
+                            <span class="text-gray-700 text-sm">肩颈紧张</span>
+                        </div>
+                        <div class="body-sensation glass-effect rounded-xl p-3 text-center cursor-pointer border border-white/30 hover:bg-orange-100 transition-colors" data-sensation="throat">
+                            <div class="text-2xl mb-1">😶</div>
+                            <span class="text-gray-700 text-sm">喉咙堵塞</span>
+                        </div>
+                        <div class="body-sensation glass-effect rounded-xl p-3 text-center cursor-pointer border border-white/30 hover:bg-orange-100 transition-colors" data-sensation="back">
+                            <div class="text-2xl mb-1">🦴</div>
+                            <span class="text-gray-700 text-sm">后背沉重</span>
+                        </div>
+                        <div class="body-sensation glass-effect rounded-xl p-3 text-center cursor-pointer border border-white/30 hover:bg-orange-100 transition-colors" data-sensation="heart">
+                            <div class="text-2xl mb-1">💗</div>
+                            <span class="text-gray-700 text-sm">心跳加速</span>
+                        </div>
+                        <div class="body-sensation glass-effect rounded-xl p-3 text-center cursor-pointer border border-white/30 hover:bg-orange-100 transition-colors" data-sensation="breathing">
+                            <div class="text-2xl mb-1">😮‍💨</div>
+                            <span class="text-gray-700 text-sm">呼吸急促</span>
+                        </div>
+                        <div class="body-sensation glass-effect rounded-xl p-3 text-center cursor-pointer border border-white/30 hover:bg-orange-100 transition-colors" data-sensation="hands">
+                            <div class="text-2xl mb-1">👐</div>
+                            <span class="text-gray-700 text-sm">手心出汗</span>
+                        </div>
+                        <div class="body-sensation glass-effect rounded-xl p-3 text-center cursor-pointer border border-white/30 hover:bg-orange-100 transition-colors" data-sensation="limbs">
+                            <div class="text-2xl mb-1">🦵</div>
+                            <span class="text-gray-700 text-sm">四肢无力</span>
+                        </div>
+                        <div class="body-sensation glass-effect rounded-xl p-3 text-center cursor-pointer border border-white/30 hover:bg-orange-100 transition-colors" data-sensation="face">
+                            <div class="text-2xl mb-1">😳</div>
+                            <span class="text-gray-700 text-sm">面部发热</span>
+                        </div>
+                        <div class="body-sensation glass-effect rounded-xl p-3 text-center cursor-pointer border border-white/30 hover:bg-orange-100 transition-colors" data-sensation="tense">
+                            <div class="text-2xl mb-1">😬</div>
+                            <span class="text-gray-700 text-sm">肌肉紧绷</span>
+                        </div>
+                        <div class="body-sensation glass-effect rounded-xl p-3 text-center cursor-pointer border border-white/30 hover:bg-orange-100 transition-colors" data-sensation="cold">
+                            <div class="text-2xl mb-1">🥶</div>
+                            <span class="text-gray-700 text-sm">手脚冰凉</span>
+                        </div>
+                        <div class="body-sensation glass-effect rounded-xl p-3 text-center cursor-pointer border border-white/30 hover:bg-orange-100 transition-colors" data-sensation="dizzy">
+                            <div class="text-2xl mb-1">😵</div>
+                            <span class="text-gray-700 text-sm">头晕目眩</span>
+                        </div>
+                        <div class="body-sensation glass-effect rounded-xl p-3 text-center cursor-pointer border border-white/30 hover:bg-orange-100 transition-colors" data-sensation="other">
+                            <div class="text-2xl mb-1">✨</div>
+                            <span class="text-gray-700 text-sm">其他感受</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 自定义身体感受输入 -->
+                <div id="customSensationInput" class="hidden mb-8 text-center">
+                    <input type="text" id="customSensationText" placeholder="描述你的身体感受..." class="w-full max-w-md px-6 py-3 rounded-full border border-gray-300 focus:outline-none focus:ring-2 focus:ring-orange-300 text-center text-base">
+                </div>
+
+                <!-- 开始释放按钮 -->
+                <div class="text-center">
+                    <button id="beginReleaseBtn" class="bg-gradient-to-r from-orange-400 to-pink-400 text-white px-10 py-4 rounded-full text-lg font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed">
+                        开始释放
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- 释放引导区域 -->
+        <section id="releaseSection" class="fixed inset-0 top-16 hidden z-40 bg-gradient-to-b from-orange-50/30 to-pink-50/30 backdrop-blur-sm">
+            <!-- 释放步骤 -->
+            <div id="releaseSteps" class="h-full relative">
+                <div class="release-step active h-full flex items-center justify-center px-6" data-step="1">
+                    <div class="max-w-3xl mx-auto text-center w-full">
+                        <!-- 进度指示器 -->
+                        <div class="mb-8">
+                            <div class="w-20 h-20 mx-auto relative">
+                                <svg class="w-20 h-20 transform -rotate-90" viewBox="0 0 120 120">
+                                    <circle cx="60" cy="60" r="50" stroke="#E5E7EB" stroke-width="8" fill="none"/>
+                                    <circle cx="60" cy="60" r="50" stroke="#F97316" stroke-width="8" fill="none" 
+                                            stroke-dasharray="314" stroke-dashoffset="235.5" class="transition-all duration-1000"/>
+                                </svg>
+                                <div class="absolute inset-0 flex items-center justify-center">
+                                    <span class="text-lg font-bold text-gray-700">1/4</span>
+                                </div>
+                            </div>
+                        </div>
+                        <h3 class="serif-font text-3xl md:text-4xl font-bold text-gray-800 mb-8">你能允许这个情绪存在吗？</h3>
+                        <div class="breathing-animation mb-8">
+                            <div class="w-24 h-24 mx-auto bg-gradient-to-br from-orange-300 to-pink-300 rounded-full flex items-center justify-center">
+                                <span class="text-3xl">🫁</span>
+                            </div>
+                        </div>
+                        <p class="text-lg md:text-xl text-gray-600 mb-12 max-w-2xl mx-auto leading-relaxed">
+                            不需要改变它，不需要压抑它，只是单纯地允许这个情绪在这里，就像允许天空中有云朵一样。
+                        </p>
+                        <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                            <button class="response-btn bg-green-100 text-green-700 px-10 py-4 rounded-full hover:bg-green-200 transition-colors text-lg font-medium" data-response="yes">是的，我允许</button>
+                            <button class="response-btn bg-yellow-100 text-yellow-700 px-10 py-4 rounded-full hover:bg-yellow-200 transition-colors text-lg font-medium" data-response="trying">我在尝试</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="release-step h-full flex items-center justify-center px-6" data-step="2">
+                    <div class="max-w-3xl mx-auto text-center w-full">
+                        <!-- 进度指示器 -->
+                        <div class="mb-8">
+                            <div class="w-20 h-20 mx-auto relative">
+                                <svg class="w-20 h-20 transform -rotate-90" viewBox="0 0 120 120">
+                                    <circle cx="60" cy="60" r="50" stroke="#E5E7EB" stroke-width="8" fill="none"/>
+                                    <circle cx="60" cy="60" r="50" stroke="#F97316" stroke-width="8" fill="none" 
+                                            stroke-dasharray="314" stroke-dashoffset="157" class="transition-all duration-1000"/>
+                                </svg>
+                                <div class="absolute inset-0 flex items-center justify-center">
+                                    <span class="text-lg font-bold text-gray-700">2/4</span>
+                                </div>
+                            </div>
+                        </div>
+                        <h3 class="serif-font text-3xl md:text-4xl font-bold text-gray-800 mb-8">你能放下它吗？</h3>
+                        <div class="breathing-animation mb-8">
+                            <div class="w-24 h-24 mx-auto bg-gradient-to-br from-blue-300 to-teal-300 rounded-full flex items-center justify-center">
+                                <span class="text-3xl">🤲</span>
+                            </div>
+                        </div>
+                        <p class="text-lg md:text-xl text-gray-600 mb-12 max-w-2xl mx-auto leading-relaxed">
+                            不是强迫它消失，而是问问自己的内心：我是否有能力让这个情绪离开？
+                        </p>
+                        <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                            <button class="response-btn bg-green-100 text-green-700 px-10 py-4 rounded-full hover:bg-green-200 transition-colors text-lg font-medium" data-response="yes">是的，我能</button>
+                            <button class="response-btn bg-yellow-100 text-yellow-700 px-10 py-4 rounded-full hover:bg-yellow-200 transition-colors text-lg font-medium" data-response="not-sure">不确定</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="release-step h-full flex items-center justify-center px-6" data-step="3">
+                    <div class="max-w-3xl mx-auto text-center w-full">
+                        <!-- 进度指示器 -->
+                        <div class="mb-8">
+                            <div class="w-20 h-20 mx-auto relative">
+                                <svg class="w-20 h-20 transform -rotate-90" viewBox="0 0 120 120">
+                                    <circle cx="60" cy="60" r="50" stroke="#E5E7EB" stroke-width="8" fill="none"/>
+                                    <circle cx="60" cy="60" r="50" stroke="#F97316" stroke-width="8" fill="none" 
+                                            stroke-dasharray="314" stroke-dashoffset="78.5" class="transition-all duration-1000"/>
+                                </svg>
+                                <div class="absolute inset-0 flex items-center justify-center">
+                                    <span class="text-lg font-bold text-gray-700">3/4</span>
+                                </div>
+                            </div>
+                        </div>
+                        <h3 class="serif-font text-3xl md:text-4xl font-bold text-gray-800 mb-8">你愿意放下它吗？</h3>
+                        <div class="breathing-animation mb-8">
+                            <div class="w-24 h-24 mx-auto bg-gradient-to-br from-purple-300 to-pink-300 rounded-full flex items-center justify-center">
+                                <span class="text-3xl">💝</span>
+                            </div>
+                        </div>
+                        <p class="text-lg md:text-xl text-gray-600 mb-12 max-w-2xl mx-auto leading-relaxed">
+                            这是一个关于选择的问题。你愿意为这个情绪腾出空间，让它自然地流走吗？
+                        </p>
+                        <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                            <button class="response-btn bg-green-100 text-green-700 px-10 py-4 rounded-full hover:bg-green-200 transition-colors text-lg font-medium" data-response="yes">是的，我愿意</button>
+                            <button class="response-btn bg-yellow-100 text-yellow-700 px-10 py-4 rounded-full hover:bg-yellow-200 transition-colors text-lg font-medium" data-response="working">正在努力</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="release-step h-full flex items-center justify-center px-6" data-step="4">
+                    <div class="max-w-3xl mx-auto text-center w-full">
+                        <!-- 进度指示器 -->
+                        <div class="mb-8">
+                            <div class="w-20 h-20 mx-auto relative">
+                                <svg class="w-20 h-20 transform -rotate-90" viewBox="0 0 120 120">
+                                    <circle cx="60" cy="60" r="50" stroke="#E5E7EB" stroke-width="8" fill="none"/>
+                                    <circle cx="60" cy="60" r="50" stroke="#F97316" stroke-width="8" fill="none" 
+                                            stroke-dasharray="314" stroke-dashoffset="0" class="transition-all duration-1000"/>
+                                </svg>
+                                <div class="absolute inset-0 flex items-center justify-center">
+                                    <span class="text-lg font-bold text-gray-700">4/4</span>
+                                </div>
+                            </div>
+                        </div>
+                        <h3 class="serif-font text-3xl md:text-4xl font-bold text-gray-800 mb-8">什么时候放下？</h3>
+                        <div class="breathing-animation mb-8">
+                            <div class="w-24 h-24 mx-auto bg-gradient-to-br from-yellow-300 to-orange-300 rounded-full flex items-center justify-center">
+                                <span class="text-3xl">✨</span>
+                            </div>
+                        </div>
+                        <p class="text-lg md:text-xl text-gray-600 mb-12 max-w-2xl mx-auto leading-relaxed">
+                            现在？还是继续抱着这个情绪一会儿？选择权始终在你手中。
+                        </p>
+                        <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                            <button class="response-btn bg-green-100 text-green-700 px-10 py-4 rounded-full hover:bg-green-200 transition-colors text-lg font-medium" data-response="now">现在</button>
+                            <button class="response-btn bg-blue-100 text-blue-700 px-10 py-4 rounded-full hover:bg-blue-200 transition-colors text-lg font-medium" data-response="when-ready">当我准备好时</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 释放完成区域 -->
+        <section id="completionSection" class="py-8 px-6 hidden">
+            <div class="max-w-4xl mx-auto text-center">
+                <div class="mb-8">
+                    <div class="w-24 h-24 mx-auto bg-gradient-to-br from-green-300 to-teal-300 rounded-full flex items-center justify-center mb-4">
+                        <span class="text-4xl">🌱</span>
+                    </div>
+                    <h3 class="serif-font text-3xl font-bold text-gray-800 mb-4">释放完成</h3>
+                    <p class="text-lg text-gray-600 mb-6 max-w-2xl mx-auto">
+                        你今天勇敢面对了情绪，这就是爱自己的开始。每一次释放都是成长的种子。
+                    </p>
+                </div>
+
+                <!-- 记录感受 -->
+                <div class="glass-effect rounded-2xl p-6 mb-6 border border-white/30">
+                    <h4 class="text-xl font-semibold text-gray-800 mb-3">记录此刻的感受</h4>
+                    <textarea id="releaseNotes" placeholder="释放后有什么感受？身体和心情有什么变化？" 
+                              class="w-full h-32 p-4 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-orange-300 resize-none"></textarea>
+                </div>
+
+                <!-- 操作按钮 -->
+                <div class="space-x-6">
+                    <button id="saveReleaseBtn" class="bg-gradient-to-r from-green-400 to-teal-400 text-white px-8 py-4 rounded-full text-lg font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300">
+                        保存记录
+                    </button>
+                    <button id="newReleaseBtn" class="bg-gradient-to-r from-orange-400 to-pink-400 text-white px-8 py-4 rounded-full text-lg font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300">
+                        再次释放
+                    </button>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- 底部导航 (桌面端) -->
+    <footer class="bg-white/50 backdrop-blur-sm border-t border-white/30 py-8 hidden md:block">
+        <div class="max-w-6xl mx-auto px-6 text-center">
+            <p class="text-gray-600 mb-4">每一次释放都是与自己和解的开始</p>
+            <div class="flex justify-center space-x-8 text-sm text-gray-500">
+                <span>🕊️ 爱自己</span>
+                <span>🌱 接纳自己</span>
+                <span>✨ 释放自己</span>
+            </div>
+        </div>
+    </footer>
+
+    <!-- 移动端底部导航 -->
+    <nav class="mobile-nav">
+        <a href="index.html" class="active">
+            <span class="text-sm font-medium">释放</span>
+        </a>
+        <a href="journal.html">
+            <span class="text-sm font-medium">日记</span>
+        </a>
+        <a href="wisdom.html">
+            <span class="text-sm font-medium">智慧</span>
+        </a>
+        <a href="chat.html">
+            <span class="text-sm font-medium">对话</span>
+        </a>
+        <a href="settings.html">
+            <span class="text-sm font-medium">设置</span>
+        </a>
+    </nav>
+
+    <!-- 背景音乐 -->
+    <audio id="backgroundMusic" loop preload="auto" volume="0.3">
+        <!-- 主要源：本地视频文件（作为音频播放） -->
+        <source src="./resources/back.mp4" type="video/mp4">
+    </audio>
+
+    <script>
+        // 确保音乐管理器在 main.js 之前初始化
+        // main.js 中的音乐管理将被 music.js 覆盖
+    </script>
+    <script src="main.js"></script>
+</body>
+</html>

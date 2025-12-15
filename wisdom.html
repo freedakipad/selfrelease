@@ -1,0 +1,1016 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>智慧库 - 自在释放</title>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&family=ZCOOL+XiaoWei&family=Long+Cang&family=Noto+Sans+SC:wght@300;400;500&display=swap" rel="stylesheet">
+    <script src="music.js"></script>
+    <script src="navbar.js"></script>
+    <style>
+        body {
+            font-family: 'ZCOOL XiaoWei', 'Noto Sans SC', sans-serif;
+            background-color: #F5F1EB;
+        }
+        .serif-font {
+            font-family: 'Ma Shan Zheng', 'Long Cang', cursive;
+        }
+        .glass-effect {
+            backdrop-filter: blur(10px);
+            background: rgba(245, 241, 235, 0.8);
+        }
+        .wisdom-card {
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        .wisdom-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 15px 35px rgba(232, 165, 152, 0.3);
+        }
+        .category-tab {
+            transition: all 0.3s ease;
+        }
+        .category-tab.active {
+            background: linear-gradient(135deg, #F97316, #EC4899);
+            color: white;
+            transform: scale(1.05);
+        }
+        .quote-card {
+            background: linear-gradient(135deg, rgba(249, 115, 22, 0.1), rgba(236, 72, 153, 0.1));
+            border-left: 4px solid #F97316;
+        }
+        .story-card {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(16, 185, 129, 0.1));
+        }
+        .principle-card {
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(245, 158, 11, 0.1));
+        }
+        .reading-time {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(5px);
+        }
+        .favorite-btn {
+            transition: all 0.3s ease;
+        }
+        .favorite-btn.active {
+            color: #EC4899;
+            transform: scale(1.2);
+        }
+        .video-card {
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(249, 115, 22, 0.1));
+        }
+        .video-thumbnail {
+            position: relative;
+            padding-bottom: 56.25%;
+            background: #1a1a1a;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        .video-thumbnail img {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .video-play-btn {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 60px;
+            height: 60px;
+            background: rgba(249, 115, 22, 0.9);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+        .video-play-btn:hover {
+            background: rgba(249, 115, 22, 1);
+            transform: translate(-50%, -50%) scale(1.1);
+        }
+        .video-play-btn::after {
+            content: '';
+            border-style: solid;
+            border-width: 10px 0 10px 18px;
+            border-color: transparent transparent transparent white;
+            margin-left: 4px;
+        }
+        .video-duration {
+            position: absolute;
+            bottom: 8px;
+            right: 8px;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+        .video-modal-content {
+            position: relative;
+            padding-bottom: 56.25%;
+            height: 0;
+            overflow: visible;
+            border-radius: 12px;
+            background: #000;
+        }
+        .video-modal-content iframe,
+        .video-modal-content video {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border-radius: 12px;
+        }
+        .video-modal-content .absolute {
+            position: absolute;
+        }
+        
+        /* 移动端适配 */
+        @media (max-width: 768px) {
+            nav .flex.space-x-8 {
+                display: none;
+            }
+            .mobile-nav {
+                display: flex !important;
+            }
+            main {
+                padding-bottom: 90px;
+            }
+            .category-tab {
+                padding: 8px 16px;
+                font-size: 14px;
+            }
+        }
+        
+        /* 移动端底部导航 */
+        .mobile-nav {
+            display: none;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(245, 241, 235, 0.95);
+            backdrop-filter: blur(10px);
+            border-top: 1px solid rgba(255,255,255,0.3);
+            padding: 8px 0;
+            z-index: 50;
+        }
+        .mobile-nav a {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 10px 6px;
+            color: #6B7280;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+        .mobile-nav a.active {
+            color: #F97316;
+            border-top: 2px solid #F97316;
+        }
+    </style>
+</head>
+<body class="min-h-screen">
+    <!-- 导航栏 -->
+    <nav id="topNav" class="fixed top-0 left-0 right-0 z-50 glass-effect border-b border-white/20">
+        <div class="max-w-6xl mx-auto px-6 py-3">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 rounded-full bg-gradient-to-br from-orange-200 to-pink-200 flex items-center justify-center">
+                        <span class="text-2xl">🕊️</span>
+                    </div>
+                    <h1 class="serif-font text-2xl font-bold text-gray-700">自在释放</h1>
+                </div>
+                <div class="flex items-center space-x-8">
+                    <a href="index.html" class="text-gray-600 font-semibold hover:text-orange-500 transition-colors">释放</a>
+                    <a href="journal.html" class="text-gray-600 font-semibold hover:text-orange-500 transition-colors">日记</a>
+                    <a href="wisdom.html" class="text-gray-800 font-semibold">智慧</a>
+                    <a href="chat.html" class="text-gray-600 font-semibold hover:text-orange-500 transition-colors">对话</a>
+                    <a href="settings.html" class="text-gray-600 font-semibold hover:text-orange-500 transition-colors">设置</a>
+                </div>
+                <!-- 音乐控制按钮 - 独立显示，移动端也可见 -->
+                <button id="musicControlBtn" title="背景音乐" aria-label="播放/暂停背景音乐">
+                    <span id="musicIcon" class="text-gray-700">
+                        <!-- 播放图标 -->
+                        <svg id="playIcon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M8 5V19L19 12L8 5Z" fill="currentColor"/>
+                        </svg>
+                        <!-- 暂停图标 -->
+                        <svg id="pauseIcon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="display: none;">
+                            <rect x="6" y="4" width="4" height="16" fill="currentColor"/>
+                            <rect x="14" y="4" width="4" height="16" fill="currentColor"/>
+                        </svg>
+                    </span>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 主要内容 -->
+    <main class="pt-16">
+        <!-- 页面标题 -->
+        <section class="py-6 px-6">
+            <div class="max-w-6xl mx-auto text-center">
+                <h2 class="serif-font text-3xl font-bold text-gray-800 mb-2">智慧库</h2>
+                <p class="text-base text-gray-600 max-w-2xl mx-auto">
+                    了解圣多纳释放法创始人莱斯特·利文森的传奇故事，在他的智慧中找到内心的启发
+                </p>
+            </div>
+        </section>
+
+        <!-- 分类导航 -->
+        <section class="py-4 px-6">
+            <div class="max-w-6xl mx-auto">
+                <div class="flex flex-wrap justify-center gap-4 mb-6">
+                    <button class="category-tab px-6 py-2 rounded-full border border-gray-300 hover:bg-orange-100 transition-colors active text-sm" data-category="all">
+                        全部视频
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- 搜索和筛选 -->
+        <section class="py-3 px-6">
+            <div class="max-w-6xl mx-auto">
+                <div class="flex flex-col md:flex-row gap-4 items-center justify-between">
+                    <div class="flex-1 max-w-md">
+                        <div class="relative">
+                            <input type="text" id="searchInput" placeholder="搜索智慧内容..." 
+                                   class="w-full pl-12 pr-4 py-3 rounded-full border border-gray-300 focus:outline-none focus:ring-2 focus:ring-orange-300">
+                            <div class="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400">
+                                🔍
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex gap-4">
+                        <select id="readingTimeFilter" class="px-4 py-3 rounded-full border border-gray-300 focus:outline-none focus:ring-2 focus:ring-orange-300">
+                            <option value="all">所有时长</option>
+                            <option value="short">10秒阅读</option>
+                            <option value="medium">1分钟阅读</option>
+                            <option value="long">3分钟阅读</option>
+                        </select>
+                        <button id="favoritesBtn" class="px-4 py-2 rounded-full border border-gray-300 hover:bg-orange-100 transition-colors text-sm">
+                            我的收藏
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 内容展示区域 -->
+        <section class="py-6 px-6">
+            <div class="max-w-6xl mx-auto">
+                <div id="wisdomContent" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 auto-rows-fr">
+                    <!-- 内容将通过JavaScript动态生成 -->
+                </div>
+                
+                <!-- 加载更多按钮 -->
+                <div class="text-center mt-8">
+                    <button id="loadMoreBtn" class="bg-gradient-to-r from-orange-400 to-pink-400 text-white px-8 py-4 rounded-full font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300">
+                        加载更多
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- 内容详情模态框 -->
+        <div id="wisdomModal" class="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm z-50 hidden">
+            <div class="flex items-center justify-center min-h-screen p-6">
+                <div class="glass-effect rounded-xl p-6 max-w-4xl w-full max-h-[90vh] overflow-y-auto border border-white/30">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 id="modalTitle" class="serif-font text-xl font-bold text-gray-800"></h3>
+                        <div class="flex items-center space-x-3">
+                            <button id="favoriteModalBtn" class="favorite-btn text-sm px-3 py-1 rounded border border-gray-300 hover:bg-orange-50">收藏</button>
+                            <button id="closeModal" class="text-gray-500 hover:text-gray-700 text-xl">×</button>
+                        </div>
+                    </div>
+                    
+                    <div id="modalContent" class="prose prose-lg max-w-none">
+                        <!-- 内容将通过JavaScript填充 -->
+                    </div>
+                    
+                    <div class="mt-6 pt-4 border-t border-gray-200">
+                        <div class="flex items-center justify-between">
+                            <div class="reading-time px-3 py-1 rounded-full text-xs text-gray-600">
+                                <span id="modalReadingTime"></span>
+                            </div>
+                            <div class="flex space-x-3">
+                                <button id="shareBtn" class="px-4 py-2 bg-blue-100 text-blue-700 rounded-full hover:bg-blue-200 transition-colors text-sm">
+                                    分享
+                                </button>
+                                <button id="saveBtn" class="px-4 py-2 bg-green-100 text-green-700 rounded-full hover:bg-green-200 transition-colors text-sm">
+                                    保存
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 视频播放模态框 -->
+        <div id="videoModal" class="fixed inset-0 bg-black bg-opacity-80 backdrop-blur-sm z-50 hidden">
+            <div class="flex items-center justify-center min-h-screen p-4">
+                <div class="w-full max-w-4xl">
+                    <div class="flex items-center justify-between mb-3">
+                        <h3 id="videoModalTitle" class="text-lg font-bold text-white"></h3>
+                        <button id="closeVideoModal" class="text-white hover:text-orange-400 text-xl">×</button>
+                    </div>
+                    <div id="videoModalContent" class="video-modal-content">
+                        <!-- 视频内容将通过JavaScript填充 -->
+                    </div>
+                    <div class="mt-3 flex items-center justify-between">
+                        <div class="text-white text-sm" id="videoDescription"></div>
+                        <button id="favoriteVideoBtn" class="favorite-btn text-sm px-3 py-1 rounded border border-white/30 hover:bg-white/20 text-white">收藏</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- 底部 -->
+    <footer class="bg-white/50 backdrop-blur-sm border-t border-white/30 py-4 md:py-6 pb-20 md:pb-6">
+        <div class="max-w-6xl mx-auto px-6 text-center">
+            <p class="text-gray-600 mb-2 text-sm">智慧源于经验，经验源于释放</p>
+            <div class="flex justify-center space-x-6 text-xs text-gray-500">
+                <span>持续学习</span>
+                <span>获得启发</span>
+                <span>实践成长</span>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // 智慧库应用
+        class WisdomApp {
+            constructor() {
+                this.currentCategory = 'all';
+                this.currentPage = 1;
+                this.itemsPerPage = 9;
+                this.favorites = JSON.parse(localStorage.getItem('wisdomFavorites') || '[]');
+                
+                this.wisdomData = this.generateWisdomData();
+                
+                this.init();
+            }
+
+            init() {
+                this.renderWisdomContent();
+                this.bindEvents();
+            }
+
+            generateWisdomData() {
+                // 只保留视频内容
+                return this.getVideoData();
+            }
+
+            getVideoData() {
+                // 尝试从 localStorage 读取视频配置
+                const savedVideos = localStorage.getItem('wisdomVideoConfigs');
+                if (savedVideos) {
+                    try {
+                        const videos = JSON.parse(savedVideos);
+                        return videos.map(v => ({
+                            ...v,
+                            category: 'videos'
+                        }));
+                    } catch (e) {
+                        console.error('解析视频配置失败', e);
+                    }
+                }
+                
+                // 默认视频数据
+                return [
+                    {
+                        id: 'video-1',
+                        category: 'videos',
+                        title: '圣多纳释放法入门指南',
+                        description: '了解圣多纳释放法的基本原理和四个核心问题，开始你的情绪释放之旅。',
+                        videoType: 'local',
+                        videoUrl: 'resources/圣多纳释放法.mp4',
+                        thumbnail: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=640&h=360&fit=crop',
+                        duration: '12:35',
+                        tags: ['入门', '基础', '教程']
+                    },
+                    {
+                        id: 'video-3',
+                        category: 'videos',
+                        title: '莱斯特的故事 - 纪录片',
+                        description: '了解圣多纳释放法创始人莱斯特·利文森的传奇人生和他的发现之旅。',
+                        videoType: 'local',
+                        videoUrl: 'resources/莱斯特人物故事.mp4',
+                        thumbnail: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=640&h=360&fit=crop',
+                        duration: '25:18',
+                        tags: ['莱斯特', '纪录片', '故事']
+                    }
+                ];
+            }
+
+            bindEvents() {
+                // 分类标签点击
+                document.querySelectorAll('.category-tab').forEach(tab => {
+                    tab.addEventListener('click', () => {
+                        this.switchCategory(tab.dataset.category);
+                    });
+                });
+
+                // 搜索输入
+                document.getElementById('searchInput').addEventListener('input', (e) => {
+                    this.searchContent(e.target.value);
+                });
+
+                // 阅读时长筛选
+                document.getElementById('readingTimeFilter').addEventListener('change', (e) => {
+                    this.filterByReadingTime(e.target.value);
+                });
+
+                // 收藏按钮
+                document.getElementById('favoritesBtn').addEventListener('click', () => {
+                    this.showFavorites();
+                });
+
+                // 加载更多
+                document.getElementById('loadMoreBtn').addEventListener('click', () => {
+                    this.loadMore();
+                });
+
+                // 模态框控制
+                document.getElementById('closeModal').addEventListener('click', () => {
+                    this.hideModal();
+                });
+
+                document.getElementById('wisdomModal').addEventListener('click', (e) => {
+                    if (e.target.id === 'wisdomModal') {
+                        this.hideModal();
+                    }
+                });
+
+                // 模态框内按钮
+                document.getElementById('favoriteModalBtn').addEventListener('click', () => {
+                    this.toggleFavorite(this.currentModalItem);
+                });
+
+                document.getElementById('shareBtn').addEventListener('click', () => {
+                    this.shareContent();
+                });
+
+                document.getElementById('saveBtn').addEventListener('click', () => {
+                    this.saveContent();
+                });
+
+                // 视频模态框控制
+                document.getElementById('closeVideoModal').addEventListener('click', () => {
+                    this.hideVideoModal();
+                });
+
+                document.getElementById('videoModal').addEventListener('click', (e) => {
+                    if (e.target.id === 'videoModal') {
+                        this.hideVideoModal();
+                    }
+                });
+
+                document.getElementById('favoriteVideoBtn').addEventListener('click', () => {
+                    if (this.currentVideoItem) {
+                        this.toggleFavorite(this.currentVideoItem.id);
+                // 更新视频模态框中的收藏按钮
+                const favoriteBtn = document.getElementById('favoriteVideoBtn');
+                if (this.favorites.includes(this.currentVideoItem.id)) {
+                    favoriteBtn.textContent = '已收藏';
+                    favoriteBtn.classList.add('bg-white/30');
+                } else {
+                    favoriteBtn.textContent = '收藏';
+                    favoriteBtn.classList.remove('bg-white/30');
+                }
+                    }
+                });
+            }
+
+            switchCategory(category) {
+                // 更新标签状态
+                document.querySelectorAll('.category-tab').forEach(tab => {
+                    tab.classList.remove('active');
+                });
+                document.querySelector(`[data-category="${category}"]`).classList.add('active');
+
+                this.currentCategory = category;
+                this.currentPage = 1;
+                this.renderWisdomContent();
+            }
+
+            searchContent(query) {
+                this.searchQuery = query.toLowerCase();
+                this.currentPage = 1;
+                this.renderWisdomContent();
+            }
+
+            filterByReadingTime(timeFilter) {
+                this.timeFilter = timeFilter;
+                this.currentPage = 1;
+                this.renderWisdomContent();
+            }
+
+            showFavorites() {
+                this.showingFavorites = !this.showingFavorites;
+                const btn = document.getElementById('favoritesBtn');
+                
+                if (this.showingFavorites) {
+                    btn.classList.add('bg-orange-100', 'border-orange-400');
+                    btn.textContent = '查看全部';
+                } else {
+                    btn.classList.remove('bg-orange-100', 'border-orange-400');
+                    btn.textContent = '我的收藏';
+                }
+                
+                this.currentPage = 1;
+                this.renderWisdomContent();
+            }
+
+            getFilteredData() {
+                let filtered = this.wisdomData;
+
+                // 分类筛选
+                if (this.currentCategory !== 'all') {
+                    filtered = filtered.filter(item => item.category === this.currentCategory);
+                }
+
+                // 搜索筛选
+                if (this.searchQuery) {
+                    filtered = filtered.filter(item => 
+                        item.title.toLowerCase().includes(this.searchQuery) ||
+                        item.content.toLowerCase().includes(this.searchQuery) ||
+                        item.tags.some(tag => tag.toLowerCase().includes(this.searchQuery))
+                    );
+                }
+
+                // 阅读时长筛选
+                if (this.timeFilter && this.timeFilter !== 'all') {
+                    filtered = filtered.filter(item => {
+                        const time = item.readingTime;
+                        switch (this.timeFilter) {
+                            case 'short': return time.includes('10秒');
+                            case 'medium': return time.includes('1分钟');
+                            case 'long': return time.includes('3分钟') || time.includes('2分钟');
+                            default: return true;
+                        }
+                    });
+                }
+
+                // 收藏筛选
+                if (this.showingFavorites) {
+                    filtered = filtered.filter(item => this.favorites.includes(item.id));
+                }
+
+                return filtered;
+            }
+
+            renderWisdomContent() {
+                const filtered = this.getFilteredData();
+                const startIndex = (this.currentPage - 1) * this.itemsPerPage;
+                const endIndex = startIndex + this.itemsPerPage;
+                const itemsToShow = filtered.slice(0, endIndex);
+
+                const container = document.getElementById('wisdomContent');
+                container.innerHTML = '';
+
+                if (itemsToShow.length === 0) {
+                    container.innerHTML = `
+                        <div class="col-span-full text-center py-12">
+                            <h3 class="text-lg font-semibold text-gray-700 mb-2">暂无内容</h3>
+                            <p class="text-gray-500 text-sm">尝试调整筛选条件或搜索关键词</p>
+                        </div>
+                    `;
+                    document.getElementById('loadMoreBtn').style.display = 'none';
+                    return;
+                }
+
+                itemsToShow.forEach(item => {
+                    const card = this.createWisdomCard(item);
+                    container.appendChild(card);
+                });
+
+                // 显示/隐藏加载更多按钮
+                const loadMoreBtn = document.getElementById('loadMoreBtn');
+                if (filtered.length > endIndex) {
+                    loadMoreBtn.style.display = 'block';
+                } else {
+                    loadMoreBtn.style.display = 'none';
+                }
+
+                // 添加动画
+                anime({
+                    targets: '.wisdom-card',
+                    opacity: [0, 1],
+                    translateY: [30, 0],
+                    delay: anime.stagger(100),
+                    duration: 600,
+                    easing: 'easeOutQuart'
+                });
+            }
+
+            createWisdomCard(item) {
+                const card = document.createElement('div');
+                const isVideo = item.category === 'videos';
+                card.className = `wisdom-card glass-effect rounded-2xl p-6 border border-white/30 flex flex-col h-full ${isVideo ? 'video-card' : ''}`;
+                
+                const isFavorite = this.favorites.includes(item.id);
+                const categoryIcon = this.getCategoryIcon(item.category);
+                const categoryName = this.getCategoryName(item.category);
+
+                if (isVideo) {
+                    // 视频卡片布局
+                    card.innerHTML = `
+                        <div class="video-thumbnail mb-4 cursor-pointer">
+                            <img src="${item.thumbnail || 'https://via.placeholder.com/640x360/1a1a1a/ffffff?text=Video'}" alt="${item.title}">
+                            <div class="video-play-btn"></div>
+                            <div class="video-duration">${item.duration || '00:00'}</div>
+                        </div>
+                        
+                        <div class="flex items-start justify-between mb-2">
+                            <div class="flex items-center space-x-2">
+                                <div class="text-xs text-gray-500">${categoryName}</div>
+                                <span class="text-xs px-2 py-0.5 rounded-full ${item.videoType === 'youtube' ? 'bg-red-100 text-red-600' : item.videoType === 'bilibili' ? 'bg-pink-100 text-pink-600' : 'bg-blue-100 text-blue-600'}">
+                                    ${item.videoType === 'youtube' ? 'YouTube' : item.videoType === 'bilibili' ? 'Bilibili' : '本地'}
+                                </span>
+                            </div>
+                            <button class="favorite-btn text-xs px-2 py-1 rounded border border-gray-300 hover:bg-orange-50 ${isFavorite ? 'bg-orange-100 border-orange-300' : ''}" data-fav-id="${item.id}">
+                                ${isFavorite ? '已收藏' : '收藏'}
+                            </button>
+                        </div>
+                        
+                        <h3 class="serif-font text-base font-bold text-gray-800 mb-2 line-clamp-2">${item.title}</h3>
+                        
+                        <div class="text-gray-600 text-xs mb-2 line-clamp-2 flex-grow">
+                            ${item.description || ''}
+                        </div>
+                        
+                        <div class="flex flex-wrap gap-1 mb-2">
+                            ${item.tags.slice(0, 3).map(tag => `<span class="px-2 py-0.5 bg-orange-100 text-orange-700 rounded-full text-xs">${tag}</span>`).join('')}
+                        </div>
+                        
+                        <button class="play-video-btn w-full bg-gradient-to-r from-red-500 to-orange-500 text-white py-2 rounded-xl font-semibold hover:shadow-lg transform hover:scale-105 transition-all duration-300 mt-auto text-sm">
+                            播放视频
+                        </button>
+                    `;
+
+                    // 绑定播放视频事件
+                    card.querySelector('.play-video-btn').addEventListener('click', () => {
+                        this.showVideoModal(item);
+                    });
+                    card.querySelector('.video-thumbnail').addEventListener('click', () => {
+                        this.showVideoModal(item);
+                    });
+                } else {
+                    // 普通内容卡片布局
+                    card.innerHTML = `
+                        <div class="flex items-start justify-between mb-3">
+                            <div class="flex items-center space-x-2">
+                                <div class="text-xs text-gray-500">${categoryName}</div>
+                                <div class="reading-time text-xs px-2 py-0.5 rounded-full bg-white/50">
+                                    ${item.readingTime}
+                                </div>
+                            </div>
+                            <button class="favorite-btn text-xs px-2 py-1 rounded border border-gray-300 hover:bg-orange-50 ${isFavorite ? 'bg-orange-100 border-orange-300' : ''}" data-fav-id="${item.id}">
+                                ${isFavorite ? '已收藏' : '收藏'}
+                            </button>
+                        </div>
+                        
+                        <h3 class="serif-font text-base font-bold text-gray-800 mb-2 line-clamp-2">${item.title}</h3>
+                        
+                        <div class="text-gray-600 text-sm mb-3 line-clamp-3 flex-grow">
+                            ${this.getContentPreview(item.content)}
+                        </div>
+                        
+                        <div class="flex flex-wrap gap-1 mb-3 min-h-[24px]">
+                            ${item.tags.slice(0, 3).map(tag => `<span class="px-2 py-0.5 bg-orange-100 text-orange-700 rounded-full text-xs">${tag}</span>`).join('')}
+                        </div>
+                        
+                        <button class="read-more-btn w-full bg-gradient-to-r from-orange-400 to-pink-400 text-white py-2 rounded-xl font-semibold hover:shadow-lg transform hover:scale-105 transition-all duration-300 mt-auto text-sm">
+                            阅读全文
+                        </button>
+                    `;
+
+                    // 绑定阅读全文事件
+                    card.querySelector('.read-more-btn').addEventListener('click', () => {
+                        this.showModal(item);
+                    });
+                }
+
+                // 绑定收藏事件
+                card.querySelector('.favorite-btn').addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    this.toggleFavorite(item.id);
+                });
+
+                return card;
+            }
+
+            getCategoryIcon(category) {
+                // 不再使用图标，返回空字符串
+                return '';
+            }
+
+            getCategoryName(category) {
+                const names = {
+                    stories: '莱斯特的故事',
+                    principles: '释放原理',
+                    quotes: '每日名言',
+                    cases: '用户案例',
+                    videos: '视频'
+                };
+                return names[category] || '其他';
+            }
+
+            getContentPreview(content) {
+                // 从HTML内容中提取文本预览
+                const tempDiv = document.createElement('div');
+                tempDiv.innerHTML = content;
+                const text = tempDiv.textContent || tempDiv.innerText || '';
+                return text.substring(0, 100) + '...';
+            }
+
+            showModal(item) {
+                this.currentModalItem = item;
+                
+                document.getElementById('modalTitle').textContent = item.title;
+                document.getElementById('modalContent').innerHTML = item.content;
+                document.getElementById('modalReadingTime').textContent = item.readingTime;
+                
+                // 更新收藏按钮状态
+                const favoriteBtn = document.getElementById('favoriteModalBtn');
+                if (this.favorites.includes(item.id)) {
+                    favoriteBtn.textContent = '已收藏';
+                    favoriteBtn.classList.add('bg-orange-100', 'border-orange-300');
+                    favoriteBtn.classList.remove('border-gray-300');
+                } else {
+                    favoriteBtn.textContent = '收藏';
+                    favoriteBtn.classList.remove('bg-orange-100', 'border-orange-300');
+                    favoriteBtn.classList.add('border-gray-300');
+                }
+                
+                document.getElementById('wisdomModal').classList.remove('hidden');
+                
+                anime({
+                    targets: '#wisdomModal > div',
+                    scale: [0.8, 1],
+                    opacity: [0, 1],
+                    duration: 300,
+                    easing: 'easeOutBack'
+                });
+            }
+
+            hideModal() {
+                anime({
+                    targets: '#wisdomModal > div',
+                    scale: [1, 0.8],
+                    opacity: [1, 0],
+                    duration: 200,
+                    easing: 'easeInBack',
+                    complete: () => {
+                        document.getElementById('wisdomModal').classList.add('hidden');
+                    }
+                });
+            }
+
+            // 视频模态框方法
+            showVideoModal(item) {
+                this.currentVideoItem = item;
+                
+                document.getElementById('videoModalTitle').textContent = item.title;
+                document.getElementById('videoDescription').textContent = item.description || '';
+                
+                // 根据视频类型生成不同的播放器
+                const videoContent = document.getElementById('videoModalContent');
+                
+                if (item.videoType === 'youtube') {
+                    // YouTube - 显示缩略图和跳转按钮
+                    const videoId = this.extractYouTubeId(item.videoUrl);
+                    const youtubeUrl = `https://www.youtube.com/watch?v=${videoId}`;
+                    const thumbnailUrl = item.thumbnail || `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`;
+                    videoContent.innerHTML = `
+                        <div class="absolute inset-0 flex flex-col items-center justify-center bg-black rounded-xl">
+                            <img src="${thumbnailUrl}" alt="${item.title}" class="absolute inset-0 w-full h-full object-cover rounded-xl opacity-60">
+                            <div class="relative z-10 text-center p-6">
+                                <div class="w-20 h-20 mx-auto mb-4 bg-red-600 rounded-full flex items-center justify-center cursor-pointer hover:bg-red-700 transition-colors" onclick="window.open('${youtubeUrl}', '_blank')">
+                                    <svg class="w-8 h-8 text-white ml-1" fill="currentColor" viewBox="0 0 24 24">
+                                        <path d="M8 5v14l11-7z"/>
+                                    </svg>
+                                </div>
+                                <p class="text-white text-lg font-semibold mb-2">${item.title}</p>
+                                <p class="text-gray-300 text-sm mb-4">点击播放按钮在 YouTube 观看</p>
+                                <a href="${youtubeUrl}" target="_blank" class="inline-flex items-center space-x-2 bg-red-600 text-white px-6 py-3 rounded-full hover:bg-red-700 transition-colors">
+                                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                                        <path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z"/>
+                                    </svg>
+                                    <span>在 YouTube 观看</span>
+                                </a>
+                            </div>
+                        </div>
+                    `;
+                } else if (item.videoType === 'bilibili') {
+                    // Bilibili - 显示缩略图和跳转按钮
+                    const bvid = this.extractBilibiliId(item.videoUrl);
+                    const bilibiliUrl = `https://www.bilibili.com/video/${bvid}`;
+                    const thumbnailUrl = item.thumbnail || 'https://via.placeholder.com/640x360/1a1a1a/ffffff?text=Bilibili';
+                    videoContent.innerHTML = `
+                        <div class="absolute inset-0 flex flex-col items-center justify-center bg-black rounded-xl">
+                            <img src="${thumbnailUrl}" alt="${item.title}" class="absolute inset-0 w-full h-full object-cover rounded-xl opacity-60">
+                            <div class="relative z-10 text-center p-6">
+                                <div class="w-20 h-20 mx-auto mb-4 bg-pink-500 rounded-full flex items-center justify-center cursor-pointer hover:bg-pink-600 transition-colors" onclick="window.open('${bilibiliUrl}', '_blank')">
+                                    <svg class="w-8 h-8 text-white ml-1" fill="currentColor" viewBox="0 0 24 24">
+                                        <path d="M8 5v14l11-7z"/>
+                                    </svg>
+                                </div>
+                                <p class="text-white text-lg font-semibold mb-2">${item.title}</p>
+                                <p class="text-gray-300 text-sm mb-4">点击播放按钮在 Bilibili 观看</p>
+                                <a href="${bilibiliUrl}" target="_blank" class="inline-flex items-center space-x-2 bg-pink-500 text-white px-6 py-3 rounded-full hover:bg-pink-600 transition-colors text-sm">
+                                    在 Bilibili 观看
+                                </a>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    // 本地视频
+                    videoContent.innerHTML = `
+                        <video controls autoplay>
+                            <source src="${item.videoUrl}" type="video/mp4">
+                            您的浏览器不支持视频播放
+                        </video>
+                    `;
+                }
+                
+                // 更新收藏按钮状态
+                const favoriteBtn = document.getElementById('favoriteVideoBtn');
+                if (this.favorites.includes(item.id)) {
+                    favoriteBtn.textContent = '❤️';
+                    favoriteBtn.classList.add('active');
+                } else {
+                    favoriteBtn.textContent = '🤍';
+                    favoriteBtn.classList.remove('active');
+                }
+                
+                document.getElementById('videoModal').classList.remove('hidden');
+                
+                anime({
+                    targets: '#videoModal > div',
+                    scale: [0.8, 1],
+                    opacity: [0, 1],
+                    duration: 300,
+                    easing: 'easeOutBack'
+                });
+            }
+
+            hideVideoModal() {
+                // 停止视频播放
+                const videoContent = document.getElementById('videoModalContent');
+                videoContent.innerHTML = '';
+                
+                anime({
+                    targets: '#videoModal > div',
+                    scale: [1, 0.8],
+                    opacity: [1, 0],
+                    duration: 200,
+                    easing: 'easeInBack',
+                    complete: () => {
+                        document.getElementById('videoModal').classList.add('hidden');
+                    }
+                });
+            }
+
+            extractYouTubeId(url) {
+                const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+                const match = url.match(regExp);
+                return (match && match[2].length === 11) ? match[2] : url;
+            }
+
+            extractBilibiliId(url) {
+                // 支持 BV 号格式
+                const bvMatch = url.match(/BV[\w]+/);
+                if (bvMatch) return bvMatch[0];
+                // 如果直接是 BV 号
+                if (url.startsWith('BV')) return url;
+                return url;
+            }
+
+            toggleFavorite(itemId) {
+                const index = this.favorites.indexOf(itemId);
+                
+                if (index > -1) {
+                    this.favorites.splice(index, 1);
+                } else {
+                    this.favorites.push(itemId);
+                }
+                
+                localStorage.setItem('wisdomFavorites', JSON.stringify(this.favorites));
+                this.renderWisdomContent();
+                
+                // 如果有模态框打开，更新模态框中的收藏按钮
+                if (this.currentModalItem && this.currentModalItem.id === itemId) {
+                    const favoriteBtn = document.getElementById('favoriteModalBtn');
+                    if (this.favorites.includes(itemId)) {
+                        favoriteBtn.textContent = '已收藏';
+                        favoriteBtn.classList.add('bg-orange-100', 'border-orange-300');
+                        favoriteBtn.classList.remove('border-gray-300');
+                    } else {
+                        favoriteBtn.textContent = '收藏';
+                        favoriteBtn.classList.remove('bg-orange-100', 'border-orange-300');
+                        favoriteBtn.classList.add('border-gray-300');
+                    }
+                }
+            }
+
+            shareContent() {
+                if (navigator.share && this.currentModalItem) {
+                    navigator.share({
+                        title: this.currentModalItem.title,
+                        text: this.getContentPreview(this.currentModalItem.content),
+                        url: window.location.href
+                    });
+                } else {
+                    // 复制到剪贴板
+                    navigator.clipboard.writeText(window.location.href);
+                    this.showSuccessMessage('链接已复制到剪贴板');
+                }
+            }
+
+            saveContent() {
+                // 这里可以实现保存到本地或云端的功能
+                this.showSuccessMessage('内容已保存');
+            }
+
+            loadMore() {
+                this.currentPage++;
+                this.renderWisdomContent();
+            }
+
+            showSuccessMessage(message) {
+                const messageEl = document.createElement('div');
+                messageEl.textContent = message;
+                messageEl.className = 'fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-green-500 text-white px-6 py-3 rounded-full shadow-lg z-50';
+                
+                document.body.appendChild(messageEl);
+                
+                anime({
+                    targets: messageEl,
+                    scale: [0, 1],
+                    opacity: [0, 1],
+                    duration: 300,
+                    easing: 'easeOutBack',
+                    complete: () => {
+                        setTimeout(() => {
+                            anime({
+                                targets: messageEl,
+                                scale: [1, 0],
+                                opacity: [1, 0],
+                                duration: 300,
+                                easing: 'easeInBack',
+                                complete: () => {
+                                    document.body.removeChild(messageEl);
+                                }
+                            });
+                        }, 1500);
+                    }
+                });
+            }
+        }
+
+        // 初始化应用
+        document.addEventListener('DOMContentLoaded', () => {
+            new WisdomApp();
+        });
+    </script>
+
+    <!-- 移动端底部导航 -->
+    <nav class="mobile-nav">
+        <a href="index.html">
+            <span class="text-sm font-medium">释放</span>
+        </a>
+        <a href="journal.html">
+            <span class="text-sm font-medium">日记</span>
+        </a>
+        <a href="wisdom.html" class="active">
+            <span class="text-sm font-medium">智慧</span>
+        </a>
+        <a href="chat.html">
+            <span class="text-sm font-medium">对话</span>
+        </a>
+        <a href="settings.html">
+            <span class="text-sm font-medium">设置</span>
+        </a>
+    </nav>
+
+    <!-- 背景音乐 -->
+    <audio id="backgroundMusic" loop preload="auto" volume="0.3">
+        <source src="./resources/back.mp4" type="video/mp4">
+    </audio>
+</body>
+</html>

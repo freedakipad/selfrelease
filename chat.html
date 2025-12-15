@@ -1,0 +1,1242 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>与莱斯特对话 - 自在释放</title>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/dompurify@3.1.2/dist/purify.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&family=ZCOOL+XiaoWei&family=Long+Cang&family=Noto+Sans+SC:wght@300;400;500&display=swap" rel="stylesheet" />
+    <style>
+    :root{ --safe-bottom: env(safe-area-inset-bottom, 0px); --dock-height: 0px; --chat-height: 60vh; }
+    body { font-family:'ZCOOL XiaoWei', 'Noto Sans SC', sans-serif; background:#F5F1EB; }
+    .serif-font { font-family:'Ma Shan Zheng', 'Long Cang', cursive; }
+    .glass { backdrop-filter: blur(10px); background: rgba(245,241,235,.86); }
+    /* 统一顶部导航玻璃效果 */
+    .glass-effect {
+      backdrop-filter: blur(10px);
+      background: rgba(245, 241, 235, 0.8);
+    }
+    /* 音乐控制按钮（与首页一致） */
+    #musicControlBtn {
+      position: relative;
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.9);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(0, 0, 0, 0.08);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+      cursor: pointer;
+    }
+    #musicControlBtn:hover {
+      transform: scale(1.05);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+      background: rgba(255, 255, 255, 1);
+    }
+    #musicControlBtn:active {
+      transform: scale(0.95);
+    }
+    #musicControlBtn.playing {
+      background: linear-gradient(135deg, rgba(249, 115, 22, 0.1), rgba(236, 72, 153, 0.1));
+      border-color: rgba(249, 115, 22, 0.3);
+    }
+    #musicControlBtn.playing::after {
+      content: '';
+      position: absolute;
+      top: -3px;
+      right: -3px;
+      width: 10px;
+      height: 10px;
+      background: #10B981;
+      border-radius: 50%;
+      border: 2px solid rgba(255, 255, 255, 0.95);
+      animation: pulse 2s infinite;
+    }
+    .message-lester { background: linear-gradient(135deg, rgba(249,115,22,.08), rgba(236,72,153,.08)); border-left:3px solid #F97316; }
+    .message-user { background: rgba(59,130,246,.08); border-right:3px solid #3B82F6; }
+    .markdown-content { line-height: 1.8; }
+    .markdown-content h1,.markdown-content h2,.markdown-content h3{ font-weight:600; margin:.75em 0 .5em; color:#374151 }
+    .quick-questions { overflow-x:auto; -webkit-overflow-scrolling:touch; }
+    .quick-questions::-webkit-scrollbar{display:none}
+    /* 输入框自适应高度 */
+    #userInput, #userInputDesktop{ min-height:42px; max-height:40vh; overflow-y:auto; }
+    /* 消息区高度由脚本计算写入 --chat-height */
+    .chat-messages { height: var(--chat-height); }
+    /* 禁用态 */
+    button[disabled]{ opacity:.5; cursor:not-allowed }
+    /* Dock 容器：移动端固定底部，包含输入区+导航，无缝连接 */
+    .bottom-dock { position: fixed; left:0; right:0; bottom:0; z-index: 40; background: rgba(245,241,235,.98); backdrop-filter: blur(10px); border-top: 1px solid rgba(200,200,200,.3); }
+    .bottom-dock .input-section { border-bottom: 1px solid rgba(200,200,200,.2); }
+    .bottom-dock .nav-section { 
+      height: 56px; 
+      padding: 8px 0;
+    }
+    .bottom-dock .nav-section a {
+      padding: 4px 0;
+      transition: all 0.2s;
+    }
+    .bottom-dock .nav-section a.active {
+      border-top: 2px solid #F97316;
+    }
+    /* 桌面端：Dock 隐藏，输入区在聊天盒子内 */
+    @media (min-width: 769px){
+      .bottom-dock { display: none; }
+      .input-bar-desktop { position: sticky; bottom: 0; z-index: 10; }
+    }
+    /* 移动端：隐藏桌面输入区 */
+    @media (max-width: 768px){
+      .input-bar-desktop { display: none; }
+      nav .flex.space-x-8 { display: none; }
+      .mobile-nav { display: flex !important; }
+      main { padding-bottom: 90px; }
+    }
+    /* 移动端底部导航（统一样式） */
+    .mobile-nav {
+      display: none;
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: rgba(245, 241, 235, 0.95);
+      backdrop-filter: blur(10px);
+      border-top: 1px solid rgba(255,255,255,0.3);
+      padding: 8px 0;
+      z-index: 50;
+    }
+    .mobile-nav a {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 10px 6px;
+      color: #6B7280;
+      text-decoration: none;
+      transition: all 0.2s;
+      font-weight: 600;
+    }
+    .mobile-nav a.active {
+      color: #F97316;
+      border-top: 2px solid #F97316;
+    }
+    /* 移动端额外底部留白，避免被输入区+底栏遮挡 */
+    @media (max-width: 768px) {
+      #mainContent {
+        padding-bottom: calc(170px + var(--safe-bottom, 0px)) !important;
+      }
+      #chatMessages {
+        padding-bottom: 100px !important;
+      }
+    }
+    
+    /* 会话历史侧栏 - 桌面端 */
+    .chat-sidebar { 
+      position: fixed; 
+      left: 0; 
+      top: 64px; 
+      bottom: 0; 
+      width: 280px; 
+      background: rgba(245,241,235,.95); 
+      backdrop-filter: blur(10px); 
+      border-right: 1px solid rgba(200,200,200,.3); 
+      z-index: 30; 
+      overflow-y: auto;
+      transform: translateX(-100%);
+      transition: transform 0.3s ease;
+    }
+    .chat-sidebar.open { transform: translateX(0); }
+    
+    /* 移动端会话历史抽屉 */
+    .chat-drawer {
+      position: fixed;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 85%;
+      max-width: 320px;
+      background: rgba(245,241,235,.98);
+      backdrop-filter: blur(10px);
+      z-index: 60;
+      overflow-y: auto;
+      transform: translateX(-100%);
+      transition: transform 0.3s ease;
+      box-shadow: 2px 0 10px rgba(0,0,0,.1);
+    }
+    .chat-drawer.open { transform: translateX(0); }
+    .drawer-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.3);
+      z-index: 59;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+    .drawer-overlay.active {
+      opacity: 1;
+      pointer-events: all;
+    }
+    
+    /* 数据分析面板 - 桌面端卡片 */
+    .analytics-card {
+      position: fixed;
+      right: 20px;
+      top: 80px;
+      width: 320px;
+      background: rgba(255,255,255,.95);
+      backdrop-filter: blur(10px);
+      border-radius: 16px;
+      border: 1px solid rgba(200,200,200,.3);
+      box-shadow: 0 4px 20px rgba(0,0,0,.1);
+      z-index: 35;
+      transform: translateX(calc(100% + 20px));
+      transition: transform 0.3s ease;
+    }
+    .analytics-card.open { transform: translateX(0); }
+    
+    /* 移动端数据分析底部抽屉 */
+    .analytics-drawer {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      max-height: 70vh;
+      background: rgba(255,255,255,.98);
+      backdrop-filter: blur(10px);
+      border-top-left-radius: 20px;
+      border-top-right-radius: 20px;
+      z-index: 50;
+      transform: translateY(100%);
+      transition: transform 0.3s ease;
+      box-shadow: 0 -4px 20px rgba(0,0,0,.1);
+    }
+    .analytics-drawer.open { transform: translateY(0); }
+    .analytics-drawer-handle {
+      width: 40px;
+      height: 4px;
+      background: #ccc;
+      border-radius: 2px;
+      margin: 8px auto;
+    }
+    
+    /* 会话项样式 */
+    .session-item {
+      padding: 12px 16px;
+      border-bottom: 1px solid rgba(200,200,200,.2);
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .session-item:hover { background: rgba(249,115,22,.1); }
+    .session-item.active { background: rgba(249,115,22,.15); border-left: 3px solid #F97316; }
+    
+    /* 加载动画 */
+    .loading-dots {
+      display: inline-flex;
+      gap: 4px;
+    }
+    .loading-dots span {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #F97316;
+      animation: bounce 1.4s infinite ease-in-out;
+    }
+    .loading-dots span:nth-child(1) { animation-delay: -0.32s; }
+    .loading-dots span:nth-child(2) { animation-delay: -0.16s; }
+    @keyframes bounce {
+      0%, 80%, 100% { transform: scale(0); }
+      40% { transform: scale(1); }
+    }
+    
+    /* 错误提示 */
+    .error-message {
+      background: rgba(239,68,68,.1);
+      border: 1px solid rgba(239,68,68,.3);
+      color: #DC2626;
+      padding: 12px;
+      border-radius: 8px;
+      margin: 8px 0;
+    }
+    /* 音乐控制按钮样式已移至 navbar.js */
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.7; transform: scale(1.15); }
+    }
+    #musicIcon {
+      width: 20px;
+      height: 20px;
+    }
+    #musicIcon svg {
+      width: 100%;
+      height: 100%;
+      fill: currentColor;
+    }
+    </style>
+</head>
+<body class="min-h-screen">
+  <!-- 导航栏 -->
+  <nav id="topNav" class="fixed top-0 left-0 right-0 z-50 glass-effect border-b border-white/20">
+    <div class="max-w-6xl mx-auto px-6 py-3">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center space-x-3">
+          <div class="w-10 h-10 rounded-full bg-gradient-to-br from-orange-200 to-pink-200 flex items-center justify-center">
+            <span class="text-2xl">🕊️</span>
+          </div>
+          <h1 class="serif-font text-2xl font-bold text-gray-700">自在释放</h1>
+        </div>
+        <div class="flex items-center space-x-8">
+          <a href="index.html" class="text-gray-600 hover:text-orange-500 transition-colors text-base">释放</a>
+          <a href="journal.html" class="text-gray-600 hover:text-orange-500 transition-colors text-base">日记</a>
+          <a href="wisdom.html" class="text-gray-600 hover:text-orange-500 transition-colors text-base">智慧</a>
+          <a href="chat.html" class="text-gray-800 font-semibold text-base">对话</a>
+          <a href="settings.html" class="text-gray-600 hover:text-orange-500 transition-colors text-base">设置</a>
+        </div>
+        <!-- 音乐控制按钮 - 独立显示，移动端也可见 -->
+        <button id="musicControlBtn" title="背景音乐" aria-label="播放/暂停背景音乐">
+          <span id="musicIcon" class="text-gray-700">
+            <!-- 播放图标 -->
+            <svg id="playIcon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M8 5V19L19 12L8 5Z" fill="currentColor"/>
+            </svg>
+            <!-- 暂停图标 -->
+            <svg id="pauseIcon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="display: none;">
+              <rect x="6" y="4" width="4" height="16" fill="currentColor"/>
+              <rect x="14" y="4" width="4" height="16" fill="currentColor"/>
+            </svg>
+          </span>
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- 会话历史侧栏 - 桌面端 -->
+  <aside id="chatSidebar" class="chat-sidebar">
+    <div class="p-4 border-b border-gray-200">
+      <div class="flex items-center justify-between mb-3">
+        <h3 class="serif-font font-bold text-gray-800">会话历史</h3>
+        <button id="closeSidebar" class="text-gray-500 hover:text-gray-700 text-xl">×</button>
+      </div>
+      <button id="newSessionBtn" class="w-full bg-gradient-to-r from-orange-400 to-pink-400 text-white py-2 rounded-lg text-sm font-semibold">
+        新会话
+      </button>
+    </div>
+    <div id="sessionList" class="py-2">
+      <!-- 会话列表由脚本动态生成 -->
+    </div>
+  </aside>
+
+  <!-- 移动端会话历史抽屉 -->
+  <div id="drawerOverlay" class="drawer-overlay"></div>
+  <aside id="chatDrawer" class="chat-drawer">
+    <div class="p-4 border-b border-gray-200">
+      <div class="flex items-center justify-between mb-3">
+        <h3 class="serif-font font-bold text-gray-800">会话历史</h3>
+        <button id="closeDrawer" class="text-gray-500 hover:text-gray-700 text-xl">×</button>
+      </div>
+      <button id="newSessionBtnMobile" class="w-full bg-gradient-to-r from-orange-400 to-pink-400 text-white py-2 rounded-lg text-sm font-semibold">
+        新会话
+      </button>
+    </div>
+    <div id="sessionListMobile" class="py-2">
+      <!-- 会话列表由脚本动态生成 -->
+    </div>
+  </aside>
+
+  <main class="pt-16 md:pt-18 md:ml-0 transition-all duration-300 pb-36 md:pb-10" id="mainContent">
+    <div class="max-w-6xl mx-auto px-3 md:px-6">
+      <!-- 标题与操作（紧凑） -->
+      <section class="py-2 md:py-3">
+        <div class="flex items-center justify-between">
+          <div class="inline-flex items-center space-x-2">
+            <div class="text-left">
+              <h2 class="serif-font text-base md:text-lg font-bold text-gray-800 leading-tight">与莱斯特对话</h2>
+              <p class="text-gray-500 text-xs">移动端优先布局</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-2">
+            <button id="openHistoryBtn" class="md:hidden px-3 py-1.5 text-gray-600 hover:text-orange-500 text-sm">
+              历史
+            </button>
+            <button id="openHistoryBtnDesktop" class="hidden md:flex items-center gap-2 px-3 py-1.5 bg-white/70 rounded-lg text-sm text-gray-700 hover:bg-white/90">
+              历史
+            </button>
+            <button id="openAnalyticsBtn" class="md:hidden px-3 py-1.5 text-gray-600 hover:text-orange-500 text-sm">
+              分析
+            </button>
+            <button id="openAnalyticsBtnDesktop" class="hidden md:flex items-center gap-2 px-3 py-1.5 bg-white/70 rounded-lg text-sm text-gray-700 hover:bg-white/90">
+              分析
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- 聊天盒子 -->
+      <section class="glass rounded-2xl border border-white/30 overflow-hidden">
+        <!-- 消息区 -->
+        <div id="chatMessages" class="chat-messages overflow-y-auto p-3 md:p-4 space-y-3 pb-8">
+          <!-- 初始欢迎消息由脚本注入 -->
+                        </div>
+        <!-- 桌面端输入区（移动端隐藏） -->
+        <div id="inputBarDesktop" class="input-bar-desktop border-t border-gray-200 bg-white/70 backdrop-blur">
+          <div class="px-3 py-1.5 border-b border-gray-100">
+            <div class="quick-questions flex gap-1.5">
+              <button class="px-2 py-1 bg-orange-50 text-orange-700 rounded-full text-xs whitespace-nowrap" data-q="我最近总是感到焦虑，不知道该怎么办">焦虑</button>
+              <button class="px-2 py-1 bg-pink-50 text-pink-700 rounded-full text-xs whitespace-nowrap" data-q="我对某个人很生气，无法释怀">愤怒</button>
+              <button class="px-2 py-1 bg-blue-50 text-blue-700 rounded-full text-xs whitespace-nowrap" data-q="我总是担心未来，害怕失败">恐惧</button>
+              <button class="px-2 py-1 bg-purple-50 text-purple-700 rounded-full text-xs whitespace-nowrap" data-q="请分析一下我最近的情绪状态">分析</button>
+              <button class="px-2 py-1 bg-teal-50 text-teal-700 rounded-full text-xs whitespace-nowrap" data-q="如何才能真正地放下执着？">原理</button>
+            </div>
+                </div>
+          <div class="flex items-stretch gap-2 md:gap-3 max-w-6xl mx-auto px-3 md:px-4 py-2">
+            <textarea id="userInputDesktop" rows="1" placeholder="告诉我你的困扰..." class="flex-1 px-3 md:px-4 py-2 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-orange-300 text-sm leading-6 resize-none bg-white/70"></textarea>
+            <button id="sendBtnDesktop" class="bg-gradient-to-r from-orange-400 to-pink-400 text-white px-4 md:px-5 rounded-xl font-semibold shadow hover:shadow-md transition">发送</button>
+                        </div>
+                    </div>
+      </section>
+
+      <!-- API 提示（未配置时显示） -->
+      <div id="apiNotice" class="mt-3 p-3 bg-yellow-50 rounded-xl border border-yellow-200 hidden">
+        <div class="flex items-start gap-2 text-sm">
+          <div>
+            <p class="text-yellow-800 font-medium">需要配置 API</p>
+            <p class="text-yellow-700">请到 <a href="settings.html" class="underline">设置</a> 填写你的 AI API 信息以启用云端对话。</p>
+          </div>
+        </div>
+      </div>
+      
+      <!-- 豆包配置检查提示 -->
+      <div id="doubaoConfigNotice" class="mt-3 p-3 bg-orange-50 rounded-xl border border-orange-200 hidden">
+        <div class="flex items-start gap-2 text-sm">
+          <div>
+            <p class="text-orange-800 font-medium">豆包配置检查</p>
+            <p class="text-orange-700" id="doubaoConfigMessage"></p>
+            <p class="text-orange-600 text-xs mt-1">请到 <a href="settings.html" class="underline">设置</a> 检查并修正配置。</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- 数据分析面板 - 桌面端卡片 -->
+  <div id="analyticsCard" class="analytics-card">
+    <div class="p-4 border-b border-gray-200">
+      <div class="flex items-center justify-between">
+        <h3 class="serif-font font-bold text-gray-800">数据分析</h3>
+        <button id="closeAnalyticsCard" class="text-gray-500 hover:text-gray-700 text-xl">×</button>
+      </div>
+    </div>
+    <div class="p-4 space-y-4">
+      <div>
+        <h4 class="text-sm font-semibold text-gray-700 mb-2">情绪分布</h4>
+        <div id="emotionChart" class="space-y-2">
+          <!-- 图表由脚本生成 -->
+        </div>
+      </div>
+      <div>
+        <h4 class="text-sm font-semibold text-gray-700 mb-2">对话统计</h4>
+        <div id="chatStats" class="space-y-2 text-sm text-gray-600">
+          <!-- 统计由脚本生成 -->
+        </div>
+      </div>
+      <div>
+        <h4 class="text-sm font-semibold text-gray-700 mb-2">关键词</h4>
+        <div id="keywords" class="flex flex-wrap gap-2">
+          <!-- 关键词由脚本生成 -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 移动端数据分析底部抽屉 -->
+  <div id="analyticsDrawer" class="analytics-drawer">
+    <div class="analytics-drawer-handle"></div>
+    <div class="p-4 border-b border-gray-200">
+      <div class="flex items-center justify-between">
+        <h3 class="serif-font font-bold text-gray-800">数据分析</h3>
+        <button id="closeAnalyticsDrawer" class="text-gray-500 hover:text-gray-700 text-xl">×</button>
+      </div>
+    </div>
+    <div class="p-4 space-y-4 max-h-[calc(70vh-80px)] overflow-y-auto">
+      <div>
+        <h4 class="text-sm font-semibold text-gray-700 mb-2">情绪分布</h4>
+        <div id="emotionChartMobile" class="space-y-2">
+          <!-- 图表由脚本生成 -->
+        </div>
+      </div>
+      <div>
+        <h4 class="text-sm font-semibold text-gray-700 mb-2">对话统计</h4>
+        <div id="chatStatsMobile" class="space-y-2 text-sm text-gray-600">
+          <!-- 统计由脚本生成 -->
+        </div>
+      </div>
+      <div>
+        <h4 class="text-sm font-semibold text-gray-700 mb-2">关键词</h4>
+        <div id="keywordsMobile" class="flex flex-wrap gap-2">
+          <!-- 关键词由脚本生成 -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+    <!-- 移动端 Dock：输入区 + 导航，无缝连接 -->
+    <div id="bottomDock" class="bottom-dock">
+      <!-- 输入区部分 -->
+      <div class="input-section bg-white/70">
+        <div class="px-3 py-1.5 border-b border-gray-100">
+          <div class="quick-questions flex gap-1.5">
+              <button class="px-2 py-1 bg-orange-50 text-orange-700 rounded-full text-xs whitespace-nowrap" data-q="我最近总是感到焦虑，不知道该怎么办">焦虑</button>
+              <button class="px-2 py-1 bg-pink-50 text-pink-700 rounded-full text-xs whitespace-nowrap" data-q="我对某个人很生气，无法释怀">愤怒</button>
+              <button class="px-2 py-1 bg-blue-50 text-blue-700 rounded-full text-xs whitespace-nowrap" data-q="我总是担心未来，害怕失败">恐惧</button>
+              <button class="px-2 py-1 bg-purple-50 text-purple-700 rounded-full text-xs whitespace-nowrap" data-q="请分析一下我最近的情绪状态">分析</button>
+              <button class="px-2 py-1 bg-teal-50 text-teal-700 rounded-full text-xs whitespace-nowrap" data-q="如何才能真正地放下执着？">原理</button>
+          </div>
+        </div>
+        <div class="flex items-stretch gap-2 px-3 py-2">
+          <textarea id="userInput" rows="1" placeholder="告诉我你的困扰..." class="flex-1 px-3 py-2 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-orange-300 text-sm leading-6 resize-none bg-white/70"></textarea>
+          <button id="sendBtn" class="bg-gradient-to-r from-orange-400 to-pink-400 text-white px-4 rounded-xl font-semibold shadow hover:shadow-md transition">发送</button>
+                        </div>
+                                </div>
+      <!-- 导航部分 -->
+      <div class="nav-section flex text-xs text-gray-600">
+        <a href="index.html" class="flex-1 flex flex-col items-center justify-center text-sm font-medium">释放</a>
+        <a href="journal.html" class="flex-1 flex flex-col items-center justify-center text-sm font-medium">日记</a>
+        <a href="wisdom.html" class="flex-1 flex flex-col items-center justify-center text-sm font-medium">智慧</a>
+        <a href="chat.html" class="flex-1 flex flex-col items-center justify-center text-sm font-medium text-orange-600">对话</a>
+        <a href="settings.html" class="flex-1 flex flex-col items-center justify-center text-sm font-medium">设置</a>
+                            </div>
+                        </div>
+
+    <script>
+    // 聊天应用主类
+    class ChatApp {
+      constructor() {
+        this.currentSessionId = null;
+        this.sessions = this.loadSessions();
+        this.state = { messages: [] };
+        this.init();
+      }
+
+      init() {
+        this.updateDockHeight();
+        this.adjustLayout();
+        this.wireInput();
+        this.wireQuickQuestions();
+        this.wireHistoryButtons();
+        this.wireAnalyticsButtons();
+        this.wireSessionButtons();
+        this.loadOrCreateSession();
+        this.checkApiConfig();
+        this.updateAnalytics();
+      }
+
+      // 会话管理
+      loadSessions() {
+        try {
+          const raw = localStorage.getItem('chatSessions');
+          if (!raw) return [];
+          const parsed = JSON.parse(raw);
+          return Array.isArray(parsed) ? parsed : [];
+        } catch (err) {
+          console.error('chatSessions parse error, reset', err);
+          localStorage.removeItem('chatSessions');
+          return [];
+        }
+      }
+
+      saveSessions() {
+        localStorage.setItem('chatSessions', JSON.stringify(this.sessions));
+      }
+
+      loadOrCreateSession() {
+        if (this.sessions.length === 0) {
+          this.createNewSession();
+        } else {
+          // 加载最新会话
+          const latestSession = this.sessions[this.sessions.length - 1];
+          this.loadSession(latestSession.id);
+        }
+      }
+
+      createNewSession() {
+        const sessionId = 'session_' + Date.now();
+        const session = {
+          id: sessionId,
+          title: '新对话',
+          messages: [],
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        };
+        this.sessions.push(session);
+        this.saveSessions();
+        this.loadSession(sessionId);
+        this.renderSessionList();
+      }
+
+      loadSession(sessionId) {
+        const session = this.sessions.find(s => s.id === sessionId);
+        if (!session) return;
+        
+        this.currentSessionId = sessionId;
+        this.state.messages = Array.isArray(session.messages) ? session.messages : [];
+        this.renderMessages();
+        this.updateSessionTitle();
+        this.renderSessionList();
+      }
+
+      saveCurrentSession() {
+        if (!this.currentSessionId) return;
+        const session = this.sessions.find(s => s.id === this.currentSessionId);
+        if (session) {
+          session.messages = this.state.messages;
+          session.updatedAt = new Date().toISOString();
+          if (session.messages.length > 0) {
+            const firstUserMsg = session.messages.find(m => m.sender === 'user');
+            if (firstUserMsg) {
+              session.title = firstUserMsg.content.substring(0, 20) + (firstUserMsg.content.length > 20 ? '...' : '');
+            }
+          }
+          this.saveSessions();
+          this.renderSessionList();
+        }
+      }
+
+      deleteSession(sessionId) {
+        this.sessions = this.sessions.filter(s => s.id !== sessionId);
+        this.saveSessions();
+        if (this.currentSessionId === sessionId) {
+          if (this.sessions.length > 0) {
+            this.loadSession(this.sessions[0].id);
+          } else {
+            this.createNewSession();
+          }
+        }
+        this.renderSessionList();
+      }
+
+      renderSessionList() {
+        const desktopList = document.getElementById('sessionList');
+        const mobileList = document.getElementById('sessionListMobile');
+        
+        const render = (container) => {
+          if (!container) return;
+          container.innerHTML = '';
+          
+          this.sessions.slice().reverse().forEach(session => {
+            const item = document.createElement('div');
+            item.className = `session-item ${session.id === this.currentSessionId ? 'active' : ''}`;
+            item.innerHTML = `
+              <div class="flex items-center justify-between">
+                <div class="flex-1 min-w-0">
+                  <div class="text-sm font-medium text-gray-800 truncate">${session.title}</div>
+                  <div class="text-xs text-gray-500">${new Date(session.updatedAt).toLocaleDateString('zh-CN')}</div>
+                </div>
+                <button class="ml-2 text-red-400 hover:text-red-600 text-sm" onclick="chatApp.deleteSession('${session.id}')" title="删除">🗑️</button>
+              </div>
+            `;
+            item.addEventListener('click', (e) => {
+              if (!e.target.closest('button')) {
+                this.loadSession(session.id);
+                this.closeHistory();
+              }
+            });
+            container.appendChild(item);
+          });
+        };
+        
+        render(desktopList);
+        render(mobileList);
+      }
+
+      updateSessionTitle() {
+        // 可以在这里更新页面标题
+      }
+
+      // 历史按钮
+      wireHistoryButtons() {
+        document.getElementById('openHistoryBtn')?.addEventListener('click', () => this.openHistory());
+        document.getElementById('openHistoryBtnDesktop')?.addEventListener('click', () => this.openHistory());
+        document.getElementById('closeSidebar')?.addEventListener('click', () => this.closeHistory());
+        document.getElementById('closeDrawer')?.addEventListener('click', () => this.closeHistory());
+        document.getElementById('drawerOverlay')?.addEventListener('click', () => this.closeHistory());
+      }
+
+      openHistory() {
+        const isMobile = window.matchMedia('(max-width: 768px)').matches;
+        if (isMobile) {
+          document.getElementById('chatDrawer')?.classList.add('open');
+          document.getElementById('drawerOverlay')?.classList.add('active');
+        } else {
+          document.getElementById('chatSidebar')?.classList.add('open');
+          document.getElementById('mainContent')?.classList.add('md:ml-[280px]');
+        }
+        this.renderSessionList();
+      }
+
+      closeHistory() {
+        document.getElementById('chatDrawer')?.classList.remove('open');
+        document.getElementById('drawerOverlay')?.classList.remove('active');
+        document.getElementById('chatSidebar')?.classList.remove('open');
+        document.getElementById('mainContent')?.classList.remove('md:ml-[280px]');
+      }
+
+      // 新建会话按钮
+      wireSessionButtons() {
+        document.getElementById('newSessionBtn')?.addEventListener('click', () => this.createNewSession());
+        document.getElementById('newSessionBtnMobile')?.addEventListener('click', () => {
+          this.createNewSession();
+          this.closeHistory();
+        });
+      }
+
+      // 数据分析
+      wireAnalyticsButtons() {
+        document.getElementById('openAnalyticsBtn')?.addEventListener('click', () => this.openAnalytics());
+        document.getElementById('openAnalyticsBtnDesktop')?.addEventListener('click', () => this.openAnalytics());
+        document.getElementById('closeAnalyticsCard')?.addEventListener('click', () => this.closeAnalytics());
+        document.getElementById('closeAnalyticsDrawer')?.addEventListener('click', () => this.closeAnalytics());
+      }
+
+      openAnalytics() {
+        const isMobile = window.matchMedia('(max-width: 768px)').matches;
+        if (isMobile) {
+          document.getElementById('analyticsDrawer')?.classList.add('open');
+        } else {
+          document.getElementById('analyticsCard')?.classList.add('open');
+        }
+        this.updateAnalytics();
+      }
+
+      closeAnalytics() {
+        document.getElementById('analyticsDrawer')?.classList.remove('open');
+        document.getElementById('analyticsCard')?.classList.remove('open');
+      }
+
+      updateAnalytics() {
+        // 情绪分布
+        const emotions = this.extractEmotions();
+        this.renderEmotionChart(emotions);
+        
+        // 对话统计
+        this.renderChatStats();
+        
+        // 关键词
+        this.renderKeywords();
+      }
+
+      extractEmotions() {
+        const emotionKeywords = {
+          '焦虑': ['焦虑', '担心', '不安', '紧张', '忧虑', '慌', '惶恐', '烦躁', '坐立不安'],
+          '愤怒': ['愤怒', '生气', '恼火', '气愤', '发火', '火大', '恼怒', '暴躁', '愤慨', '不爽'],
+          '恐惧': ['恐惧', '害怕', '担忧', '恐慌', '胆怯', '畏惧', '惊恐', '可怕', '吓'],
+          '悲伤': ['悲伤', '难过', '伤心', '沮丧', '失落', '郁闷', '低落', '痛苦', '悲痛', '哀伤', '难受'],
+          '压力': ['压力', '压抑', '承受', '负担', '喘不过气', '累', '疲惫', '崩溃'],
+          '孤独': ['孤独', '寂寞', '孤单', '无人理解', '孤立', '独自'],
+          '愧疚': ['愧疚', '内疚', '惭愧', '对不起', '抱歉', '后悔', '自责'],
+          '无助': ['无助', '无力', '无能为力', '束手无策', '迷茫', '困惑', '不知所措'],
+          '平静': ['平静', '放松', '安心', '舒适', '宁静', '淡定', '释放', '轻松', '好多了']
+        };
+        
+        const emotionCounts = {};
+        this.sessions.forEach(session => {
+          if (!session.messages || !Array.isArray(session.messages)) return;
+          
+          session.messages.forEach(msg => {
+            if (msg.sender === 'user' && msg.content) {
+              Object.keys(emotionKeywords).forEach(emotion => {
+                if (emotionKeywords[emotion].some(keyword => msg.content.includes(keyword))) {
+                  emotionCounts[emotion] = (emotionCounts[emotion] || 0) + 1;
+                }
+              });
+            }
+          });
+        });
+        
+        return emotionCounts;
+      }
+
+      renderEmotionChart(emotions) {
+        const containers = ['emotionChart', 'emotionChartMobile'];
+        
+        // 情绪颜色映射
+        const emotionColors = {
+          '焦虑': 'from-yellow-400 to-orange-400',
+          '愤怒': 'from-red-400 to-pink-400',
+          '恐惧': 'from-purple-400 to-indigo-400',
+          '悲伤': 'from-blue-400 to-cyan-400',
+          '压力': 'from-orange-400 to-red-400',
+          '孤独': 'from-gray-400 to-slate-400',
+          '愧疚': 'from-amber-400 to-yellow-400',
+          '无助': 'from-teal-400 to-cyan-400',
+          '平静': 'from-green-400 to-emerald-400'
+        };
+        
+        containers.forEach(id => {
+          const container = document.getElementById(id);
+          if (!container) return;
+          
+          if (Object.keys(emotions).length === 0) {
+            container.innerHTML = '<div class="text-gray-500 text-sm text-center py-4">开始对话后，这里会显示您的情绪分布</div>';
+            return;
+          }
+          
+          const total = Object.values(emotions).reduce((a, b) => a + b, 0);
+          const sortedEmotions = Object.entries(emotions).sort((a, b) => b[1] - a[1]);
+          
+          container.innerHTML = sortedEmotions
+            .map(([emotion, count]) => {
+              const percentage = ((count / total) * 100).toFixed(1);
+              const colorClass = emotionColors[emotion] || 'from-orange-400 to-pink-400';
+              return `
+                <div class="flex items-center justify-between mb-3">
+                  <span class="text-sm text-gray-700 font-medium w-12">${emotion}</span>
+                  <div class="flex items-center space-x-2 flex-1">
+                    <div class="flex-1 h-3 bg-gray-200 rounded-full overflow-hidden">
+                      <div class="h-full bg-gradient-to-r ${colorClass} rounded-full transition-all duration-500" style="width: ${percentage}%"></div>
+                    </div>
+                    <span class="text-xs text-gray-600 w-16 text-right">${count}次 ${percentage}%</span>
+                  </div>
+                </div>
+              `;
+            }).join('');
+        });
+      }
+
+      renderChatStats() {
+        const containers = ['chatStats', 'chatStatsMobile'];
+        const totalSessions = this.sessions.length;
+        const totalMessages = this.sessions.reduce((sum, s) => sum + (s.messages?.length || 0), 0);
+        const avgMessages = totalSessions > 0 ? (totalMessages / totalSessions).toFixed(1) : 0;
+        
+        containers.forEach(id => {
+          const container = document.getElementById(id);
+          if (!container) return;
+          container.innerHTML = `
+            <div class="flex justify-between"><span>总会话数</span><span class="font-semibold">${totalSessions}</span></div>
+            <div class="flex justify-between"><span>总消息数</span><span class="font-semibold">${totalMessages}</span></div>
+            <div class="flex justify-between"><span>平均消息数</span><span class="font-semibold">${avgMessages}</span></div>
+          `;
+        });
+      }
+
+      renderKeywords() {
+        const containers = ['keywords', 'keywordsMobile'];
+        const keywordCounts = {};
+        
+        // 停用词列表
+        const stopWords = ['我们', '自己', '什么', '怎么', '但是', '所以', '因为', '如果', '这个', '那个', '可以', '已经', '应该', '这样', '还是', '或者', '不是', '没有', '就是'];
+        
+        this.sessions.forEach(session => {
+          if (!session.messages || !Array.isArray(session.messages)) return;
+          
+          session.messages.forEach(msg => {
+            if (msg.sender === 'user' && msg.content) {
+              const words = msg.content.match(/[\u4e00-\u9fa5]{2,}/g) || [];
+              words.forEach(word => {
+                if (word.length >= 2 && word.length <= 6 && !stopWords.includes(word)) {
+                  keywordCounts[word] = (keywordCounts[word] || 0) + 1;
+                }
+              });
+            }
+          });
+        });
+        
+        const topKeywords = Object.entries(keywordCounts)
+          .sort((a, b) => b[1] - a[1])
+          .slice(0, 15)
+          .map(([word]) => word);
+        
+        containers.forEach(id => {
+          const container = document.getElementById(id);
+          if (!container) return;
+          if (topKeywords.length === 0) {
+            container.innerHTML = '<div class="text-gray-500 text-sm text-center py-2">暂无关键词</div>';
+            return;
+          }
+          container.innerHTML = topKeywords.map(word => 
+            `<span class="px-2 py-1 bg-orange-100 text-orange-700 rounded-full text-xs">${word}</span>`
+          ).join('');
+        });
+      }
+
+      // API配置检查
+      checkApiConfig() {
+        const apiKey = localStorage.getItem('aiApiKey');
+        const apiNotice = document.getElementById('apiNotice');
+        
+        // 如果没有配置API Key，显示提示
+        if (!apiKey && apiNotice) {
+          apiNotice.classList.remove('hidden');
+        } else if (apiNotice) {
+          apiNotice.classList.add('hidden');
+        }
+        
+        // 如果没有配置，尝试设置默认豆包配置（但不自动设置API Key）
+        if (!localStorage.getItem('aiApiEndpoint')) {
+          localStorage.setItem('aiApiEndpoint', 'https://ark.cn-beijing.volces.com/api/v3/chat/completions');
+        }
+        if (!localStorage.getItem('aiApiModel')) {
+          localStorage.setItem('aiApiModel', 'doubao-seed-1-6-251015');
+        }
+        
+        // 检查豆包配置
+        this.checkDoubaoConfig();
+      }
+
+      // 获取API配置
+      getApiConfig() {
+        // 如果没有配置，使用豆包默认配置
+        const endpoint = localStorage.getItem('aiApiEndpoint');
+        const apiKey = localStorage.getItem('aiApiKey');
+        const model = localStorage.getItem('aiApiModel');
+        
+        return {
+          endpoint: endpoint || 'https://ark.cn-beijing.volces.com/api/v3/chat/completions',
+          apiKey: apiKey || '',
+          model: model || 'doubao-seed-1-6-251015',
+          apiType: endpoint?.includes('volces.com') ? 'doubao' : 'openai'
+        };
+      }
+
+      // 检查豆包配置
+      checkDoubaoConfig() {
+        const config = this.getApiConfig();
+        const notice = document.getElementById('doubaoConfigNotice');
+        const message = document.getElementById('doubaoConfigMessage');
+        
+        if (!notice || !message) return true;
+        
+        // 检查是否是豆包配置
+        const isDoubao = config.endpoint?.includes('volces.com') || config.model?.includes('doubao');
+        
+        if (!isDoubao) {
+          // 如果不是豆包配置，不显示提示
+          notice.classList.add('hidden');
+          return true;
+        }
+        
+        // 检查豆包配置是否正确
+        const issues = [];
+        
+        if (!config.apiKey) {
+          issues.push('缺少 API 密钥');
+        }
+        
+        if (!config.endpoint || !config.endpoint.includes('volces.com')) {
+          issues.push('API 端点不正确，应为 volces.com 域名');
+        }
+        
+        if (!config.model || !config.model.includes('doubao')) {
+          issues.push('模型名称不正确，应包含 doubao');
+        }
+        
+        if (issues.length > 0) {
+          message.textContent = `检测到配置问题：${issues.join('、')}`;
+          notice.classList.remove('hidden');
+          return false;
+        } else {
+          notice.classList.add('hidden');
+          return true;
+        }
+      }
+
+      // 发送消息到AI
+      async sendToAI(userMessage) {
+        const config = this.getApiConfig();
+        
+        // 检查豆包配置
+        if (config.endpoint?.includes('volces.com') || config.model?.includes('doubao')) {
+          const configValid = this.checkDoubaoConfig();
+          if (!configValid) {
+            // 配置不正确，不发送请求
+            return null;
+          }
+        }
+        
+        if (!config.apiKey) {
+          return null; // 使用本地兜底
+        }
+
+        try {
+          const messages = [
+            {
+              role: 'system',
+              content: `你是莱斯特·利文森，圣多纳释放法的创始人。你的交流风格如下：
+
+1. **朋友般的陪伴**：像一位真诚的朋友，用温暖、理解的态度倾听对方的困扰，不评判、不指责，给予无条件的接纳和支持。
+
+2. **专注的倾听者**：认真倾听对方的每一句话，理解他们内心的感受和需求。通过提问帮助对方更深入地探索自己的情绪，而不是急于给出建议。
+
+3. **讲故事的方式**：用生动的故事、比喻和例子来说明道理，让抽象的概念变得具体可感。可以分享你的人生经历、他人的故事，或者用简单的比喻来帮助对方理解。
+
+4. **温和的引导**：用简单、开放性的问题引导对方自我探索，比如"你现在的感受是什么？"、"这种感觉让你想到了什么？"、"如果放下这种感觉，你会怎样？"
+
+5. **语言风格**：用中文回复，语气温和亲切，像老朋友聊天一样自然。避免说教，多用"我理解"、"我感受到"、"让我们一起来看看"这样的表达。
+
+记住：你不是在治疗，而是在陪伴；不是在教导，而是在倾听；不是在改变对方，而是在帮助他们发现自己内在的智慧。`
+            },
+            ...this.state.messages.slice(-10).map(m => ({
+              role: m.sender === 'user' ? 'user' : 'assistant',
+              content: m.content
+            })),
+            { role: 'user', content: userMessage }
+          ];
+
+          // 构建请求体
+          const requestBody = {
+            model: config.model,
+            messages: messages,
+            temperature: 0.7
+          };
+
+          // 豆包API支持更大的max_tokens
+          if (config.apiType === 'doubao') {
+            requestBody.max_tokens = 32000;
+          } else {
+            requestBody.max_tokens = 2000;
+          }
+
+          // 构建请求头
+          const headers = {
+            'Content-Type': 'application/json'
+          };
+
+          // 豆包API使用Authorization Bearer格式
+          if (config.apiType === 'doubao') {
+            headers['Authorization'] = `Bearer ${config.apiKey}`;
+          } else {
+            headers['Authorization'] = `Bearer ${config.apiKey}`;
+          }
+
+          const response = await fetch(config.endpoint, {
+            method: 'POST',
+            headers: headers,
+            body: JSON.stringify(requestBody)
+          });
+
+          if (!response.ok) {
+            const errorText = await response.text();
+            console.error('API错误:', response.status, errorText);
+            throw new Error(`API错误: ${response.status} - ${errorText}`);
+          }
+
+          const data = await response.json();
+          
+          // 处理响应格式（豆包和OpenAI格式兼容）
+          if (data.choices && data.choices[0]) {
+            return data.choices[0].message?.content || data.choices[0].delta?.content || null;
+          } else if (data.result) {
+            // 某些API可能返回result字段
+            return data.result;
+          } else {
+            console.warn('未知的API响应格式:', data);
+            return null;
+          }
+        } catch (error) {
+          console.error('AI请求失败:', error);
+          return null; // 使用本地兜底
+        }
+      }
+
+      // 工具函数
+      getActiveInputs() {
+      const isMobile = window.matchMedia('(max-width: 768px)').matches;
+      if (isMobile) {
+        return {
+          input: document.getElementById('userInput'),
+          sendBtn: document.getElementById('sendBtn')
+        };
+                    } else {
+        return {
+          input: document.getElementById('userInputDesktop'),
+          sendBtn: document.getElementById('sendBtnDesktop')
+        };
+      }
+      }
+
+      updateDockHeight() {
+      const isMobile = window.matchMedia('(max-width: 768px)').matches;
+      const dock = document.getElementById('bottomDock');
+      if (isMobile && dock) {
+        const h = dock.offsetHeight;
+        document.documentElement.style.setProperty('--dock-height', h + 'px');
+        return h;
+      }
+      document.documentElement.style.setProperty('--dock-height', '0px');
+      return 0;
+      }
+
+      adjustLayout() {
+        try {
+        const viewportH = (window.visualViewport && window.visualViewport.height) || window.innerHeight;
+        const isMobile = window.matchMedia('(max-width: 768px)').matches;
+        const dockH = this.updateDockHeight();
+        const chatMessages = document.getElementById('chatMessages');
+        if (!chatMessages) return;
+        const rect = chatMessages.getBoundingClientRect ? chatMessages.getBoundingClientRect() : null;
+        if (!rect) return;
+        const topOffset = rect.top;
+        const inputBarDesktop = document.getElementById('inputBarDesktop');
+        const desktopInputH = (!isMobile && inputBarDesktop) ? inputBarDesktop.offsetHeight : 0;
+        const usedH = isMobile ? dockH : desktopInputH;
+        // 移动端额外留出一些空间，避免内容被遮挡
+        const extraPadding = isMobile ? 8 : 0;
+        const available = Math.max(140, viewportH - topOffset - usedH - extraPadding);
+        document.documentElement.style.setProperty('--chat-height', available + 'px');
+        } catch(e) { console.error('adjustLayout error:', e); }
+    }
+
+      wireInput() {
+      const wireOne = (input, sendBtn) => {
+        if (!input || !sendBtn) return;
+        const autoResize = () => {
+          input.style.height = 'auto';
+          const maxH = Math.floor(((window.visualViewport && window.visualViewport.height) || window.innerHeight) * 0.4);
+          input.style.height = Math.min(input.scrollHeight, maxH) + 'px';
+          sendBtn.disabled = input.value.trim().length === 0;
+            this.adjustLayout();
+        };
+        input.addEventListener('input', autoResize);
+          input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+              e.preventDefault();
+              this.send();
+            }
+          });
+          sendBtn.addEventListener('click', () => this.send());
+        sendBtn.disabled = true;
+      };
+      wireOne(document.getElementById('userInput'), document.getElementById('sendBtn'));
+      wireOne(document.getElementById('userInputDesktop'), document.getElementById('sendBtnDesktop'));
+    }
+
+      wireQuickQuestions() {
+        document.querySelectorAll('[data-q]').forEach(btn => {
+          btn.addEventListener('click', () => {
+          const q = btn.getAttribute('data-q');
+            const { input } = this.getActiveInputs();
+          if (input) {
+            input.value = q;
+            input.dispatchEvent(new Event('input'));
+            input.focus();
+          }
+        });
+      });
+    }
+
+      addMessage(sender, content, skipSave = false) {
+        // 如果不是跳过保存模式，则添加到消息列表并保存
+        if (!skipSave) {
+          const message = { sender, content, timestamp: new Date().toISOString() };
+          this.state.messages.push(message);
+          this.saveCurrentSession();
+        }
+        
+        const wrap = document.getElementById('chatMessages');
+        const item = document.createElement('div');
+        const time = new Date().toLocaleTimeString('zh-CN', {hour:'2-digit', minute:'2-digit'});
+        
+        if (sender === 'user') {
+          item.className = 'message-user rounded-2xl p-3 max-w-[85%] ml-auto';
+          item.innerHTML = `<div class="text-right text-xs text-blue-600 mb-1">你 <span class="text-gray-400">${time}</span></div><div class="text-gray-700 text-sm">${this.escapeHtml(content)}</div>`;
+        } else {
+          const html = (typeof marked !== 'undefined') ? marked.parse(content) : content.replace(/\n/g, '<br>');
+          const safe = (typeof DOMPurify !== 'undefined') ? DOMPurify.sanitize(html) : html;
+          item.className = 'message-lester rounded-2xl p-3 max-w-[85%]';
+          item.innerHTML = `<div class="text-xs text-orange-600 mb-1">莱斯特 <span class="text-gray-400">${time}</span></div><div class="markdown-content text-gray-700 text-sm">${safe}</div>`;
+        }
+        
+        wrap.appendChild(item);
+        if (typeof anime !== 'undefined') {
+          anime({ targets: item, opacity: [0, 1], translateY: [12, 0], duration: 300, easing: 'easeOutQuart' });
+        }
+        wrap.scrollTop = wrap.scrollHeight;
+        this.adjustLayout();
+      }
+
+      renderMessages() {
+        const wrap = document.getElementById('chatMessages');
+        wrap.innerHTML = '';
+        // 渲染已有消息时，跳过保存，避免重复添加
+        this.state.messages.forEach(msg => {
+          this.addMessage(msg.sender, msg.content, true);
+        });
+      }
+
+      escapeHtml(s) {
+        const d = document.createElement('div');
+        d.textContent = s;
+        return d.innerHTML;
+      }
+
+      async send() {
+        const { input } = this.getActiveInputs();
+        if (!input) return;
+        const text = input.value.trim();
+        if (!text) return;
+        
+        this.addMessage('user', text);
+        input.value = '';
+        input.dispatchEvent(new Event('input'));
+        
+        // 显示加载状态
+        const loadingId = 'loading_' + Date.now();
+        this.addMessage('lester', '<div class="loading-dots"><span></span><span></span><span></span></div>');
+        
+        // 尝试调用AI
+        const aiResponse = await this.sendToAI(text);
+        
+        // 移除加载消息
+        const wrap = document.getElementById('chatMessages');
+        const lastMsg = wrap.lastElementChild;
+        if (lastMsg && lastMsg.querySelector('.loading-dots')) {
+          lastMsg.remove();
+        }
+        
+        // 添加AI回复或本地兜底
+        if (aiResponse) {
+          this.addMessage('lester', aiResponse);
+        } else {
+          this.addMessage('lester', `谢谢你的分享。先观察一下此刻的身体感受，\n\n- 在胸口？还是肩颈？\n- 允许它存在片刻，然后轻轻问自己：我能放下它吗？\n\n（温和微笑）当你准备好了，我们继续。`);
+        }
+        
+        this.updateAnalytics();
+      }
+    }
+
+    // 初始化应用
+    let chatApp;
+    document.addEventListener('DOMContentLoaded', () => {
+      chatApp = new ChatApp();
+    });
+    window.addEventListener('resize', () => {
+      if (chatApp) {
+        chatApp.updateDockHeight();
+        chatApp.adjustLayout();
+      }
+    });
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', () => {
+        if (chatApp) {
+          chatApp.updateDockHeight();
+          chatApp.adjustLayout();
+        }
+      });
+    }
+    </script>
+
+    <!-- 背景音乐 -->
+    <audio id="backgroundMusic" loop preload="auto" volume="0.3">
+        <source src="./resources/back.mp4" type="video/mp4">
+    </audio>
+
+    <script src="music.js"></script>
+</body>
+</html>

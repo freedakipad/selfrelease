@@ -1,0 +1,1406 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>设置 - 自在释放</title>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&family=ZCOOL+XiaoWei&family=Long+Cang&family=Noto+Sans+SC:wght@300;400;500&display=swap" rel="stylesheet">
+    <script src="music.js"></script>
+    <script src="navbar.js"></script>
+    <style>
+        body {
+            font-family: 'ZCOOL XiaoWei', 'Noto Sans SC', sans-serif;
+            background-color: #F5F1EB;
+        }
+        .serif-font {
+            font-family: 'Ma Shan Zheng', 'Long Cang', cursive;
+        }
+        .glass-effect {
+            backdrop-filter: blur(10px);
+            background: rgba(245, 241, 235, 0.8);
+        }
+        .setting-item {
+            transition: all 0.3s ease;
+        }
+        .setting-item:hover {
+            transform: translateX(4px);
+            background: rgba(232, 165, 152, 0.1);
+        }
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 34px;
+        }
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 34px;
+        }
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 26px;
+            width: 26px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        input:checked + .slider {
+            background-color: #F97316;
+        }
+        input:checked + .slider:before {
+            transform: translateX(26px);
+        }
+        .range-slider {
+            -webkit-appearance: none;
+            appearance: none;
+            height: 8px;
+            border-radius: 4px;
+            background: #ddd;
+            outline: none;
+        }
+        .range-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #F97316;
+            cursor: pointer;
+        }
+        .range-slider::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #F97316;
+            cursor: pointer;
+            border: none;
+        }
+        
+        /* 移动端适配 */
+        @media (max-width: 768px) {
+            nav .flex.space-x-8 {
+                display: none;
+            }
+            .mobile-nav {
+                display: flex !important;
+            }
+            main {
+                padding-bottom: 70px;
+            }
+        }
+        
+        /* 移动端底部导航 */
+        .mobile-nav {
+            display: none;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(245, 241, 235, 0.95);
+            backdrop-filter: blur(10px);
+            border-top: 1px solid rgba(255,255,255,0.3);
+            padding: 8px 0;
+            z-index: 50;
+        }
+        .mobile-nav a {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 10px 6px;
+            color: #6B7280;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+        .mobile-nav a.active {
+            color: #F97316;
+            border-top: 2px solid #F97316;
+        }
+    </style>
+</head>
+<body class="min-h-screen">
+    <!-- 导航栏 -->
+    <nav id="topNav" class="fixed top-0 left-0 right-0 z-50 glass-effect border-b border-white/20">
+        <div class="max-w-6xl mx-auto px-6 py-3">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 rounded-full bg-gradient-to-br from-orange-200 to-pink-200 flex items-center justify-center">
+                        <span class="text-2xl">🕊️</span>
+                    </div>
+                    <h1 class="serif-font text-2xl font-bold text-gray-700">自在释放</h1>
+                </div>
+                <div class="flex items-center space-x-8">
+                    <a href="index.html" class="text-gray-600 font-semibold hover:text-orange-500 transition-colors">释放</a>
+                    <a href="journal.html" class="text-gray-600 font-semibold hover:text-orange-500 transition-colors">日记</a>
+                    <a href="wisdom.html" class="text-gray-600 font-semibold hover:text-orange-500 transition-colors">智慧</a>
+                    <a href="chat.html" class="text-gray-600 font-semibold hover:text-orange-500 transition-colors">对话</a>
+                    <a href="settings.html" class="text-gray-800 font-semibold">设置</a>
+                </div>
+                <!-- 音乐控制按钮 - 独立显示，移动端也可见 -->
+                <button id="musicControlBtn" title="背景音乐" aria-label="播放/暂停背景音乐">
+                    <span id="musicIcon" class="text-gray-700">
+                        <!-- 播放图标 -->
+                        <svg id="playIcon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M8 5V19L19 12L8 5Z" fill="currentColor"/>
+                        </svg>
+                        <!-- 暂停图标 -->
+                        <svg id="pauseIcon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="display: none;">
+                            <rect x="6" y="4" width="4" height="16" fill="currentColor"/>
+                            <rect x="14" y="4" width="4" height="16" fill="currentColor"/>
+                        </svg>
+                    </span>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 主要内容 -->
+    <main class="pt-16">
+        <!-- 页面标题 -->
+        <section class="py-4 px-6">
+            <div class="max-w-6xl mx-auto text-center">
+                <h2 class="serif-font text-2xl font-bold text-gray-800 mb-1">设置</h2>
+                <p class="text-sm text-gray-600 max-w-2xl mx-auto">
+                    个性化你的释放体验，让应用更好地陪伴你的成长
+                </p>
+            </div>
+        </section>
+
+        <!-- 设置内容 -->
+        <section class="py-4 px-6 pb-4">
+            <div class="max-w-4xl mx-auto">
+                <!-- 个人信息 -->
+                <div class="glass-effect rounded-xl p-4 mb-4 border border-white/30">
+                    <h3 class="serif-font text-lg font-bold text-gray-800 mb-3">
+                        个人信息
+                    </h3>
+                    
+                    <div class="space-y-3">
+                        <div class="bg-blue-50 p-3 rounded-lg mb-3">
+                            <p class="text-blue-700 text-xs">
+                                填写个人信息后，莱斯特会根据你的年龄和性别，用更贴近你的方式与你对话，分享更适合你的故事和建议。
+                            </p>
+                        </div>
+                        
+                        <div class="setting-item p-3 rounded-lg">
+                            <h4 class="font-semibold text-gray-800 mb-2 text-sm">昵称</h4>
+                            <input type="text" id="userNickname" 
+                                   placeholder="你希望莱斯特怎么称呼你？" 
+                                   class="w-full px-3 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-orange-300 text-sm">
+                        </div>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="setting-item p-3 rounded-lg">
+                                <h4 class="font-semibold text-gray-800 mb-2 text-sm">性别</h4>
+                                <select id="userGender" class="w-full px-3 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-orange-300 text-sm">
+                                    <option value="">请选择</option>
+                                    <option value="male">男</option>
+                                    <option value="female">女</option>
+                                    <option value="other">其他</option>
+                                </select>
+                            </div>
+                            
+                            <div class="setting-item p-3 rounded-lg">
+                                <h4 class="font-semibold text-gray-800 mb-2 text-sm">生日</h4>
+                                <input type="date" id="userBirthday" 
+                                       class="w-full px-3 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-orange-300 text-sm">
+                            </div>
+                        </div>
+                        
+                        <div class="setting-item p-3 rounded-lg">
+                            <h4 class="font-semibold text-gray-800 mb-2 text-sm">职业/身份（可选）</h4>
+                            <input type="text" id="userOccupation" 
+                                   placeholder="如：学生、上班族、创业者、全职妈妈..." 
+                                   class="w-full px-3 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-orange-300 text-sm">
+                        </div>
+                        
+                        <button id="saveUserInfo" class="w-full bg-gradient-to-r from-orange-400 to-pink-400 text-white py-2 rounded-lg font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 text-sm">
+                            保存个人信息
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 提醒设置 -->
+                <div class="glass-effect rounded-xl p-4 mb-4 border border-white/30">
+                    <h3 class="serif-font text-lg font-bold text-gray-800 mb-3">
+                        提醒设置
+                    </h3>
+                    
+                    <div class="space-y-3">
+                        <div class="setting-item flex items-center justify-between p-3 rounded-lg">
+                            <div>
+                                <h4 class="font-semibold text-gray-800 text-sm">每日释放提醒</h4>
+                                <p class="text-xs text-gray-600">每天定时提醒你进行情绪释放练习</p>
+                            </div>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="dailyReminder" checked>
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                        
+                        <div class="setting-item flex items-center justify-between p-3 rounded-lg">
+                            <div>
+                                <h4 class="font-semibold text-gray-800 text-sm">提醒时间</h4>
+                                <p class="text-xs text-gray-600">设置每日提醒的时间</p>
+                            </div>
+                            <input type="time" id="reminderTime" value="20:00" class="px-3 py-1.5 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-orange-300 text-sm">
+                        </div>
+                        
+                        <div class="setting-item flex items-center justify-between p-3 rounded-lg">
+                            <div>
+                                <h4 class="font-semibold text-gray-800 text-sm">温和提醒</h4>
+                                <p class="text-xs text-gray-600">使用温柔的声音和震动提醒</p>
+                            </div>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="gentleReminder" checked>
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                        
+                        <div class="setting-item p-3 rounded-lg">
+                            <h4 class="font-semibold text-gray-800 mb-2 text-sm">提醒频率</h4>
+                            <div class="flex items-center space-x-3">
+                                <span class="text-xs text-gray-600">每天</span>
+                                <input type="range" id="reminderFrequency" min="1" max="7" value="1" class="range-slider flex-1">
+                                <span class="text-xs text-gray-600">每<span id="frequencyValue">1</span>天</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 隐私设置 -->
+                <div class="glass-effect rounded-xl p-4 mb-4 border border-white/30">
+                    <h3 class="serif-font text-lg font-bold text-gray-800 mb-3">
+                        隐私设置
+                    </h3>
+                    
+                    <div class="space-y-3">
+                        <div class="setting-item flex items-center justify-between p-3 rounded-lg">
+                            <div>
+                                <h4 class="font-semibold text-gray-800 text-sm">匿名模式</h4>
+                                <p class="text-xs text-gray-600">不记录个人身份信息，保护隐私</p>
+                            </div>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="anonymousMode">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                        
+                        <div class="setting-item flex items-center justify-between p-3 rounded-lg">
+                            <div>
+                                <h4 class="font-semibold text-gray-800 text-sm">本地数据存储</h4>
+                                <p class="text-xs text-gray-600">所有数据仅存储在本地，不上传云端</p>
+                            </div>
+                            <div class="text-xs text-green-600 font-semibold">已启用</div>
+                        </div>
+                        
+                        <div class="setting-item p-3 rounded-lg">
+                            <h4 class="font-semibold text-gray-800 mb-2 text-sm">数据管理</h4>
+                            <div class="flex flex-wrap gap-2">
+                                <button id="exportData" class="px-3 py-1.5 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors text-sm">
+                                    导出数据
+                                </button>
+                                <button id="importData" class="px-3 py-1.5 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-colors text-sm">
+                                    导入数据
+                                </button>
+                                <button id="clearData" class="px-3 py-1.5 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors text-sm">
+                                    清空数据
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 功能设置 -->
+                <div class="glass-effect rounded-xl p-4 mb-4 border border-white/30">
+                    <h3 class="serif-font text-lg font-bold text-gray-800 mb-3">
+                        功能设置
+                    </h3>
+                    
+                    <div class="space-y-3">
+                        <div class="setting-item flex items-center justify-between p-3 rounded-lg">
+                            <div>
+                                <h4 class="font-semibold text-gray-800 text-sm">语音引导</h4>
+                                <p class="text-xs text-gray-600">使用语音进行释放引导</p>
+                            </div>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="voiceGuide" checked>
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                        
+                        <div class="setting-item flex items-center justify-between p-3 rounded-lg">
+                            <div>
+                                <h4 class="font-semibold text-gray-800 text-sm">背景音乐</h4>
+                                <p class="text-xs text-gray-600">播放轻柔的背景音乐</p>
+                            </div>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="backgroundMusicSetting">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                        
+                        <div class="setting-item flex items-center justify-between p-3 rounded-lg">
+                            <div>
+                                <h4 class="font-semibold text-gray-800 text-sm">震动反馈</h4>
+                                <p class="text-xs text-gray-600">操作时提供触觉反馈</p>
+                            </div>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="hapticFeedback" checked>
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                        
+                        <div class="setting-item p-3 rounded-lg">
+                            <h4 class="font-semibold text-gray-800 mb-2 text-sm">字体大小</h4>
+                            <div class="flex items-center space-x-3">
+                                <span class="text-xs text-gray-600">小</span>
+                                <input type="range" id="fontSize" min="12" max="20" value="16" class="range-slider flex-1">
+                                <span class="text-xs text-gray-600">大</span>
+                            </div>
+                            <div class="mt-1 text-xs text-gray-500">当前：<span id="fontSizeValue">16</span>px</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 个性化设置 -->
+                <div class="glass-effect rounded-xl p-4 mb-4 border border-white/30">
+                    <h3 class="serif-font text-lg font-bold text-gray-800 mb-3">
+                        个性化设置
+                    </h3>
+                    
+                    <div class="space-y-3">
+                        <div class="setting-item p-3 rounded-lg">
+                            <h4 class="font-semibold text-gray-800 mb-2 text-sm">主题色彩</h4>
+                            <div class="flex space-x-4">
+                                <button class="theme-color w-12 h-12 rounded-full bg-gradient-to-br from-orange-400 to-pink-400 border-4 border-white shadow-lg" data-theme="warm"></button>
+                                <button class="theme-color w-12 h-12 rounded-full bg-gradient-to-br from-blue-400 to-teal-400 border-2 border-gray-300" data-theme="cool"></button>
+                                <button class="theme-color w-12 h-12 rounded-full bg-gradient-to-br from-purple-400 to-pink-400 border-2 border-gray-300" data-theme="purple"></button>
+                                <button class="theme-color w-12 h-12 rounded-full bg-gradient-to-br from-green-400 to-teal-400 border-2 border-gray-300" data-theme="nature"></button>
+                            </div>
+                        </div>
+                        
+                        <div class="setting-item flex items-center justify-between p-3 rounded-lg">
+                            <div>
+                                <h4 class="font-semibold text-gray-800 text-sm">深色模式</h4>
+                                <p class="text-xs text-gray-600">切换到深色主题</p>
+                            </div>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="darkMode">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                        
+                        <div class="setting-item flex items-center justify-between p-3 rounded-lg">
+                            <div>
+                                <h4 class="font-semibold text-gray-800 text-sm">动画效果</h4>
+                                <p class="text-xs text-gray-600">启用页面动画和过渡效果</p>
+                            </div>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="animations" checked>
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- AI 对话设置 -->
+                <div class="glass-effect rounded-xl p-4 mb-4 border border-white/30">
+                    <h3 class="serif-font text-lg font-bold text-gray-800 mb-3">
+                        AI 对话设置
+                    </h3>
+                    
+                    <div class="space-y-3">
+                        <div class="bg-blue-50 p-3 rounded-lg mb-3">
+                            <p class="text-blue-700 text-xs">
+                                配置 AI API 后，你可以与"莱斯特"进行智能对话，获得个性化的情绪释放建议。
+                                支持 OpenAI、Claude 等兼容 API。
+                            </p>
+                        </div>
+                        
+                        <div class="setting-item p-3 rounded-lg">
+                            <h4 class="font-semibold text-gray-800 mb-2 text-sm">API 端点</h4>
+                            <input type="text" id="aiApiEndpoint" 
+                                   placeholder="https://api.openai.com/v1/chat/completions" 
+                                   class="w-full px-3 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-orange-300 text-sm">
+                            <p class="text-xs text-gray-500 mt-1">默认使用 OpenAI API，也可以使用其他兼容的 API 端点</p>
+                        </div>
+                        
+                        <div class="setting-item p-3 rounded-lg">
+                            <h4 class="font-semibold text-gray-800 mb-2 text-sm">API 密钥</h4>
+                            <div class="relative">
+                                <input type="password" id="aiApiKey" 
+                                       placeholder="sk-..." 
+                                       class="w-full px-3 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-orange-300 pr-10 text-sm">
+                                <button id="toggleApiKey" class="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 text-sm">
+                                    显示
+                                </button>
+                            </div>
+                            <p class="text-xs text-gray-500 mt-1">你的 API 密钥仅存储在本地，不会上传到任何服务器</p>
+                        </div>
+                        
+                        <div class="setting-item p-3 rounded-lg">
+                            <h4 class="font-semibold text-gray-800 mb-2 text-sm">模型选择</h4>
+                            <select id="aiApiModel" class="w-full px-3 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-orange-300 text-sm">
+                                <option value="doubao-seed-1-6-251015">豆包 1.6（推荐）</option>
+                                <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
+                                <option value="gpt-4">GPT-4</option>
+                                <option value="gpt-4-turbo">GPT-4 Turbo</option>
+                                <option value="claude-3-sonnet-20240229">Claude 3 Sonnet</option>
+                                <option value="claude-3-opus-20240229">Claude 3 Opus</option>
+                            </select>
+                        </div>
+                        
+                        <div class="flex space-x-3">
+                            <button id="saveApiSettings" class="flex-1 bg-gradient-to-r from-orange-400 to-pink-400 text-white py-2 rounded-lg font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 text-sm">
+                                保存设置
+                            </button>
+                            <button id="testApiConnection" class="flex-1 bg-blue-100 text-blue-700 py-2 rounded-lg font-semibold hover:bg-blue-200 transition-colors text-sm">
+                                测试连接
+                            </button>
+                        </div>
+                        
+                        <div id="apiTestResult" class="hidden p-4 rounded-xl text-center"></div>
+                    </div>
+                </div>
+
+                <!-- 关于应用 -->
+                <div class="glass-effect rounded-xl p-4 mb-4 border border-white/30">
+                    <h3 id="aboutAppTitle" class="serif-font text-lg font-bold text-gray-800 mb-3 cursor-pointer select-none">
+                        关于应用
+                    </h3>
+                    
+                    <div class="space-y-3">
+                        <div class="text-center">
+                            <h4 class="serif-font text-lg font-bold text-gray-800 mb-1">自在释放</h4>
+                            <p class="text-sm text-gray-600 mb-2">基于圣多纳释放法的情绪疗愈应用</p>
+                            <div class="text-xs text-gray-500 space-y-0.5">
+                                <p>版本：1.0.0</p>
+                                <p>开发者：自在释放团队</p>
+                                <p>© 2025 版权所有</p>
+                            </div>
+                        </div>
+                        
+                        <div class="border-t border-gray-200 pt-3">
+                            <h5 class="font-semibold text-gray-800 mb-2 text-sm">快速操作</h5>
+                            <div class="flex flex-wrap gap-2">
+                                <button id="helpBtn" class="px-3 py-1.5 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors text-sm">
+                                    使用帮助
+                                </button>
+                                <button id="feedbackBtn" class="px-3 py-1.5 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-colors text-sm">
+                                    意见反馈
+                                </button>
+                                <button id="rateBtn" class="px-3 py-1.5 bg-yellow-100 text-yellow-700 rounded-lg hover:bg-yellow-200 transition-colors text-sm">
+                                    评价应用
+                                </button>
+                                <button id="aboutBtn" class="px-3 py-1.5 bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 transition-colors text-sm">
+                                    关于我们
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 视频配置面板（隐藏，点击关于应用6次显示） -->
+                <div id="videoConfigPanel" class="glass-effect rounded-2xl p-8 mb-8 border border-white/30 hidden">
+                    <h3 class="serif-font text-2xl font-bold text-gray-800 mb-6 flex items-center">
+                        <span class="text-2xl mr-3">🎬</span>
+                        视频配置
+                        <span class="ml-2 text-xs bg-orange-100 text-orange-600 px-2 py-1 rounded-full">开发者模式</span>
+                    </h3>
+                    
+                    <div class="space-y-4">
+                        <div class="bg-yellow-50 p-4 rounded-xl mb-4">
+                            <p class="text-yellow-700 text-sm">
+                                在此配置智慧库中的视频内容。支持 YouTube、Bilibili 和本地视频文件。
+                            </p>
+                        </div>
+                        
+                        <div id="videoConfigList" class="space-y-3">
+                            <!-- 视频配置列表将由 JavaScript 动态生成 -->
+                        </div>
+                        
+                        <button id="addVideoBtn" class="w-full py-2 border-2 border-dashed border-gray-300 rounded-lg text-gray-500 hover:border-orange-400 hover:text-orange-500 transition-colors flex items-center justify-center text-sm">
+                            添加新视频
+                        </button>
+                        
+                        <div class="flex space-x-3">
+                            <button id="saveVideoConfig" class="flex-1 bg-gradient-to-r from-orange-400 to-pink-400 text-white py-2 rounded-lg font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 text-sm">
+                                保存视频配置
+                            </button>
+                            <button id="resetVideoConfig" class="flex-1 bg-gray-200 text-gray-700 py-2 rounded-lg font-semibold hover:bg-gray-300 transition-colors text-sm">
+                                重置默认
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- 底部 -->
+    <footer class="bg-white/50 backdrop-blur-sm border-t border-white/30 py-4 md:py-6 pb-24 md:pb-6">
+        <div class="max-w-6xl mx-auto px-6 text-center">
+            <p class="text-gray-600 mb-2 text-sm">让每一次设置都成为爱自己的体现</p>
+            <div class="flex justify-center space-x-6 text-xs text-gray-500">
+                <span>个性化</span>
+                <span>保护隐私</span>
+                <span>持续优化</span>
+            </div>
+        </div>
+    </footer>
+
+    <!-- 确认对话框 -->
+    <div id="confirmModal" class="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm z-50 hidden">
+        <div class="flex items-center justify-center min-h-screen p-6">
+            <div class="glass-effect rounded-xl p-6 max-w-md w-full border border-white/30">
+                <h3 class="serif-font text-lg font-bold text-gray-800 mb-3">确认操作</h3>
+                <p id="confirmMessage" class="text-gray-600 mb-4 text-sm"></p>
+                <div class="flex space-x-3">
+                    <button id="confirmBtn" class="flex-1 bg-red-500 text-white py-2 rounded-lg font-semibold hover:bg-red-600 transition-colors text-sm">
+                        确认
+                    </button>
+                    <button id="cancelConfirmBtn" class="flex-1 bg-gray-200 text-gray-700 py-2 rounded-lg font-semibold hover:bg-gray-300 transition-colors text-sm">
+                        取消
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 设置应用
+        class SettingsApp {
+            constructor() {
+                this.settings = this.loadSettings();
+                this.init();
+            }
+
+            init() {
+                this.applySettings();
+                this.bindEvents();
+            }
+
+            loadSettings() {
+                const defaultSettings = {
+                    dailyReminder: true,
+                    reminderTime: '20:00',
+                    gentleReminder: true,
+                    reminderFrequency: 1,
+                    anonymousMode: false,
+                    voiceGuide: true,
+                    backgroundMusicSetting: false,
+                    hapticFeedback: true,
+                    fontSize: 16,
+                    theme: 'warm',
+                    darkMode: false,
+                    animations: true
+                };
+
+                const saved = localStorage.getItem('appSettings');
+                return saved ? { ...defaultSettings, ...JSON.parse(saved) } : defaultSettings;
+            }
+
+            saveSettings() {
+                localStorage.setItem('appSettings', JSON.stringify(this.settings));
+            }
+
+            applySettings() {
+                // 应用开关设置
+                document.getElementById('dailyReminder').checked = this.settings.dailyReminder;
+                document.getElementById('reminderTime').value = this.settings.reminderTime;
+                document.getElementById('gentleReminder').checked = this.settings.gentleReminder;
+                document.getElementById('reminderFrequency').value = this.settings.reminderFrequency;
+                document.getElementById('anonymousMode').checked = this.settings.anonymousMode;
+                document.getElementById('voiceGuide').checked = this.settings.voiceGuide;
+                document.getElementById('backgroundMusicSetting').checked = this.settings.backgroundMusicSetting;
+                document.getElementById('hapticFeedback').checked = this.settings.hapticFeedback;
+                document.getElementById('darkMode').checked = this.settings.darkMode;
+                document.getElementById('animations').checked = this.settings.animations;
+
+                // 应用滑块设置
+                document.getElementById('fontSize').value = this.settings.fontSize;
+                document.getElementById('fontSizeValue').textContent = this.settings.fontSize;
+                document.getElementById('frequencyValue').textContent = this.settings.reminderFrequency;
+
+                // 应用主题
+                this.applyTheme();
+                this.applyFontSize();
+            }
+
+            applyTheme() {
+                const themeColors = {
+                    warm: 'from-orange-400 to-pink-400',
+                    cool: 'from-blue-400 to-teal-400',
+                    purple: 'from-purple-400 to-pink-400',
+                    nature: 'from-green-400 to-teal-400'
+                };
+
+                // 这里可以动态更新CSS变量或类名来应用主题
+                console.log(`应用主题: ${this.settings.theme}`);
+            }
+
+            applyFontSize() {
+                document.documentElement.style.fontSize = `${this.settings.fontSize}px`;
+            }
+
+            bindEvents() {
+                // 开关事件
+                document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+                    checkbox.addEventListener('change', (e) => {
+                        const key = e.target.id;
+                        this.settings[key] = e.target.checked;
+                        this.saveSettings();
+                        this.handleSettingChange(key, e.target.checked);
+                    });
+                });
+
+                // 时间输入事件
+                document.getElementById('reminderTime').addEventListener('change', (e) => {
+                    this.settings.reminderTime = e.target.value;
+                    this.saveSettings();
+                });
+
+                // 滑块事件
+                document.getElementById('fontSize').addEventListener('input', (e) => {
+                    this.settings.fontSize = parseInt(e.target.value);
+                    document.getElementById('fontSizeValue').textContent = e.target.value;
+                    this.applyFontSize();
+                    this.saveSettings();
+                });
+
+                document.getElementById('reminderFrequency').addEventListener('input', (e) => {
+                    this.settings.reminderFrequency = parseInt(e.target.value);
+                    document.getElementById('frequencyValue').textContent = e.target.value;
+                    this.saveSettings();
+                });
+
+                // 主题颜色选择
+                document.querySelectorAll('.theme-color').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const theme = e.target.dataset.theme;
+                        this.settings.theme = theme;
+                        this.applyTheme();
+                        this.saveSettings();
+                        
+                        // 更新选中状态
+                        document.querySelectorAll('.theme-color').forEach(b => {
+                            b.classList.remove('border-4', 'border-white');
+                            b.classList.add('border-2', 'border-gray-300');
+                        });
+                        e.target.classList.remove('border-2', 'border-gray-300');
+                        e.target.classList.add('border-4', 'border-white');
+                    });
+                });
+
+                // 数据管理按钮
+                document.getElementById('exportData').addEventListener('click', () => {
+                    this.exportData();
+                });
+
+                document.getElementById('importData').addEventListener('click', () => {
+                    this.importData();
+                });
+
+                document.getElementById('clearData').addEventListener('click', () => {
+                    this.showConfirmModal('确定要清空所有数据吗？此操作不可恢复。', () => {
+                        this.clearAllData();
+                    });
+                });
+
+                // 关于应用按钮
+                document.getElementById('helpBtn').addEventListener('click', () => {
+                    this.showHelp();
+                });
+
+                document.getElementById('feedbackBtn').addEventListener('click', () => {
+                    this.showFeedback();
+                });
+
+                document.getElementById('rateBtn').addEventListener('click', () => {
+                    this.showRate();
+                });
+
+                document.getElementById('aboutBtn').addEventListener('click', () => {
+                    this.showAbout();
+                });
+
+                // 确认对话框
+                document.getElementById('confirmBtn').addEventListener('click', () => {
+                    if (this.confirmCallback) {
+                        this.confirmCallback();
+                    }
+                    this.hideConfirmModal();
+                });
+
+                document.getElementById('cancelConfirmBtn').addEventListener('click', () => {
+                    this.hideConfirmModal();
+                });
+            }
+
+            handleSettingChange(key, value) {
+                // 处理特定设置变化
+                switch (key) {
+                    case 'darkMode':
+                        this.toggleDarkMode(value);
+                        break;
+                    case 'animations':
+                        this.toggleAnimations(value);
+                        break;
+                    case 'dailyReminder':
+                        this.toggleReminder(value);
+                        break;
+                }
+            }
+
+            toggleDarkMode(enabled) {
+                if (enabled) {
+                    document.body.classList.add('dark');
+                } else {
+                    document.body.classList.remove('dark');
+                }
+            }
+
+            toggleAnimations(enabled) {
+                // 这里可以禁用/启用动画
+                console.log(`动画 ${enabled ? '启用' : '禁用'}`);
+            }
+
+            toggleReminder(enabled) {
+                if (enabled) {
+                    this.scheduleReminder();
+                } else {
+                    this.cancelReminder();
+                }
+            }
+
+            scheduleReminder() {
+                console.log(`设置提醒: 每天 ${this.settings.reminderTime}`);
+                // 这里可以实现实际的提醒调度逻辑
+            }
+
+            cancelReminder() {
+                console.log('取消提醒');
+                // 这里可以实现取消提醒的逻辑
+            }
+
+            exportData() {
+                const data = {
+                    settings: this.settings,
+                    releases: JSON.parse(localStorage.getItem('sedonaReleases') || '[]'),
+                    journalEntries: JSON.parse(localStorage.getItem('journalEntries') || '[]'),
+                    wisdomFavorites: JSON.parse(localStorage.getItem('wisdomFavorites') || '[]'),
+                    exportDate: new Date().toISOString()
+                };
+
+                const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `sedona-release-data-${new Date().toISOString().split('T')[0]}.json`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+
+                this.showSuccessMessage('数据导出成功');
+            }
+
+            importData() {
+                const input = document.createElement('input');
+                input.type = 'file';
+                input.accept = '.json';
+                input.onchange = (e) => {
+                    const file = e.target.files[0];
+                    if (file) {
+                        const reader = new FileReader();
+                        reader.onload = (e) => {
+                            try {
+                                const data = JSON.parse(e.target.result);
+                                
+                                // 验证数据格式
+                                if (data.settings && data.exportDate) {
+                                    this.showConfirmModal('导入数据将覆盖现有数据，确定要继续吗？', () => {
+                                        // 导入数据
+                                        if (data.settings) this.settings = { ...this.settings, ...data.settings };
+                                        if (data.releases) localStorage.setItem('sedonaReleases', JSON.stringify(data.releases));
+                                        if (data.journalEntries) localStorage.setItem('journalEntries', JSON.stringify(data.journalEntries));
+                                        if (data.wisdomFavorites) localStorage.setItem('wisdomFavorites', JSON.stringify(data.wisdomFavorites));
+                                        
+                                        this.saveSettings();
+                                        this.applySettings();
+                                        this.showSuccessMessage('数据导入成功');
+                                    });
+                                } else {
+                                    this.showErrorMessage('数据格式不正确');
+                                }
+                            } catch (error) {
+                                this.showErrorMessage('文件解析失败');
+                            }
+                        };
+                        reader.readAsText(file);
+                    }
+                };
+                input.click();
+            }
+
+            clearAllData() {
+                localStorage.clear();
+                this.settings = this.loadSettings();
+                this.applySettings();
+                this.showSuccessMessage('所有数据已清空');
+            }
+
+            showConfirmModal(message, callback) {
+                document.getElementById('confirmMessage').textContent = message;
+                this.confirmCallback = callback;
+                document.getElementById('confirmModal').classList.remove('hidden');
+                
+                anime({
+                    targets: '#confirmModal > div',
+                    scale: [0.8, 1],
+                    opacity: [0, 1],
+                    duration: 300,
+                    easing: 'easeOutBack'
+                });
+            }
+
+            hideConfirmModal() {
+                anime({
+                    targets: '#confirmModal > div',
+                    scale: [1, 0.8],
+                    opacity: [1, 0],
+                    duration: 200,
+                    easing: 'easeInBack',
+                    complete: () => {
+                        document.getElementById('confirmModal').classList.add('hidden');
+                    }
+                });
+            }
+
+            showSuccessMessage(message) {
+                this.showMessage(message, 'success');
+            }
+
+            showErrorMessage(message) {
+                this.showMessage(message, 'error');
+            }
+
+            showMessage(message, type) {
+                const messageEl = document.createElement('div');
+                messageEl.textContent = message;
+                messageEl.className = `fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 px-6 py-3 rounded-full shadow-lg z-50 ${
+                    type === 'success' ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
+                }`;
+                
+                document.body.appendChild(messageEl);
+                
+                anime({
+                    targets: messageEl,
+                    scale: [0, 1],
+                    opacity: [0, 1],
+                    duration: 300,
+                    easing: 'easeOutBack',
+                    complete: () => {
+                        setTimeout(() => {
+                            anime({
+                                targets: messageEl,
+                                scale: [1, 0],
+                                opacity: [1, 0],
+                                duration: 300,
+                                easing: 'easeInBack',
+                                complete: () => {
+                                    document.body.removeChild(messageEl);
+                                }
+                            });
+                        }, 2000);
+                    }
+                });
+            }
+
+            showHelp() {
+                window.open('#', '_blank');
+            }
+
+            showFeedback() {
+                const feedback = prompt('请输入您的反馈意见：');
+                if (feedback) {
+                    console.log('用户反馈：', feedback);
+                    this.showSuccessMessage('感谢您的反馈！');
+                }
+            }
+
+            showRate() {
+                const rating = prompt('请为我们的应用打分（1-5分）：');
+                if (rating && rating >= 1 && rating <= 5) {
+                    console.log('用户评分：', rating);
+                    this.showSuccessMessage('感谢您的评价！');
+                }
+            }
+
+            showAbout() {
+                alert('自在释放是一款基于圣多纳释放法的情绪疗愈应用，致力于帮助用户找到内心的平静与自由。');
+            }
+
+            // AI API 设置相关方法
+            initApiSettings() {
+                // 加载已保存的 API 设置，默认使用豆包
+                const apiEndpoint = localStorage.getItem('aiApiEndpoint') || '';
+                const apiKey = localStorage.getItem('aiApiKey') || '';
+                const apiModel = localStorage.getItem('aiApiModel') || 'doubao-seed-1-6-251015';
+
+                document.getElementById('aiApiEndpoint').value = apiEndpoint;
+                document.getElementById('aiApiKey').value = apiKey;
+                document.getElementById('aiApiModel').value = apiModel;
+                
+                // 如果是首次使用，自动保存默认配置
+                if (!localStorage.getItem('aiApiKey')) {
+                    localStorage.setItem('aiApiEndpoint', apiEndpoint);
+                    localStorage.setItem('aiApiKey', apiKey);
+                    localStorage.setItem('aiApiModel', apiModel);
+                }
+            }
+
+            bindApiEvents() {
+                // 切换密钥可见性
+                document.getElementById('toggleApiKey').addEventListener('click', () => {
+                    const input = document.getElementById('aiApiKey');
+                    if (input.type === 'password') {
+                        input.type = 'text';
+                    } else {
+                        input.type = 'password';
+                    }
+                });
+
+                // 保存 API 设置
+                document.getElementById('saveApiSettings').addEventListener('click', () => {
+                    this.saveApiSettings();
+                });
+
+                // 测试 API 连接
+                document.getElementById('testApiConnection').addEventListener('click', () => {
+                    this.testApiConnection();
+                });
+            }
+
+            saveApiSettings() {
+                const endpoint = document.getElementById('aiApiEndpoint').value.trim();
+                const apiKey = document.getElementById('aiApiKey').value.trim();
+                const model = document.getElementById('aiApiModel').value;
+
+                localStorage.setItem('aiApiEndpoint', endpoint || 'https://api.openai.com/v1/chat/completions');
+                localStorage.setItem('aiApiKey', apiKey);
+                localStorage.setItem('aiApiModel', model);
+
+                this.showSuccessMessage('API 设置已保存');
+            }
+
+            // 用户信息相关方法
+            initUserInfo() {
+                const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
+                
+                if (userInfo.nickname) document.getElementById('userNickname').value = userInfo.nickname;
+                if (userInfo.gender) document.getElementById('userGender').value = userInfo.gender;
+                if (userInfo.birthday) document.getElementById('userBirthday').value = userInfo.birthday;
+                if (userInfo.occupation) document.getElementById('userOccupation').value = userInfo.occupation;
+            }
+
+            bindUserInfoEvents() {
+                document.getElementById('saveUserInfo').addEventListener('click', () => {
+                    this.saveUserInfo();
+                });
+            }
+
+            saveUserInfo() {
+                const userInfo = {
+                    nickname: document.getElementById('userNickname').value.trim(),
+                    gender: document.getElementById('userGender').value,
+                    birthday: document.getElementById('userBirthday').value,
+                    occupation: document.getElementById('userOccupation').value.trim()
+                };
+                
+                localStorage.setItem('userInfo', JSON.stringify(userInfo));
+                this.showSuccessMessage('个人信息已保存');
+            }
+
+            async testApiConnection() {
+                const endpoint = document.getElementById('aiApiEndpoint').value.trim() || 'https://api.openai.com/v1/chat/completions';
+                const apiKey = document.getElementById('aiApiKey').value.trim();
+                const model = document.getElementById('aiApiModel').value;
+
+                const resultDiv = document.getElementById('apiTestResult');
+                resultDiv.classList.remove('hidden', 'bg-green-100', 'bg-red-100');
+                resultDiv.innerHTML = '<span class="text-gray-600">正在测试连接...</span>';
+                resultDiv.classList.add('bg-gray-100');
+
+                if (!apiKey) {
+                    resultDiv.classList.remove('bg-gray-100');
+                    resultDiv.classList.add('bg-red-100');
+                    resultDiv.innerHTML = '<span class="text-red-700">❌ 请先输入 API 密钥</span>';
+                    return;
+                }
+
+                try {
+                    const response = await fetch(endpoint, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${apiKey}`
+                        },
+                        body: JSON.stringify({
+                            model: model,
+                            messages: [{ role: 'user', content: '你好' }],
+                            max_tokens: 10
+                        })
+                    });
+
+                    if (response.ok) {
+                        resultDiv.classList.remove('bg-gray-100');
+                        resultDiv.classList.add('bg-green-100');
+                        resultDiv.innerHTML = '<span class="text-green-700">✅ 连接成功！API 配置正确</span>';
+                    } else {
+                        const error = await response.json();
+                        resultDiv.classList.remove('bg-gray-100');
+                        resultDiv.classList.add('bg-red-100');
+                        resultDiv.innerHTML = `<span class="text-red-700">❌ 连接失败：${error.error?.message || '未知错误'}</span>`;
+                    }
+                } catch (error) {
+                    resultDiv.classList.remove('bg-gray-100');
+                    resultDiv.classList.add('bg-red-100');
+                    resultDiv.innerHTML = `<span class="text-red-700">❌ 连接失败：${error.message}</span>`;
+                }
+            }
+
+            // 视频配置相关方法
+            initVideoConfig() {
+                this.aboutClickCount = 0;
+                this.lastClickTime = 0;
+                this.videoConfigs = JSON.parse(localStorage.getItem('wisdomVideoConfigs') || '[]');
+                
+                // 如果没有配置，使用默认视频数据
+                if (this.videoConfigs.length === 0) {
+                    this.videoConfigs = this.getDefaultVideoConfigs();
+                }
+            }
+
+            getDefaultVideoConfigs() {
+                return [
+                    {
+                        id: 'video-1',
+                        title: '圣多纳释放法入门指南',
+                        description: '了解圣多纳释放法的基本原理和四个核心问题，开始你的情绪释放之旅。',
+                        videoType: 'youtube',
+                        videoUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+                        thumbnail: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=640&h=360&fit=crop',
+                        duration: '12:35',
+                        tags: ['入门', '基础', '教程']
+                    },
+                    {
+                        id: 'video-2',
+                        title: '如何释放焦虑情绪',
+                        description: '实用的焦虑释放技巧，帮助你在日常生活中快速平复焦虑。',
+                        videoType: 'bilibili',
+                        videoUrl: 'BV1xx411c7mD',
+                        thumbnail: 'https://images.unsplash.com/photo-1499209974431-9dddcece7f88?w=640&h=360&fit=crop',
+                        duration: '08:42',
+                        tags: ['焦虑', '实践', '技巧']
+                    },
+                    {
+                        id: 'video-3',
+                        title: '莱斯特的故事 - 纪录片',
+                        description: '了解圣多纳释放法创始人莱斯特·利文森的传奇人生和他的发现之旅。',
+                        videoType: 'youtube',
+                        videoUrl: 'https://www.youtube.com/watch?v=example123',
+                        thumbnail: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=640&h=360&fit=crop',
+                        duration: '25:18',
+                        tags: ['莱斯特', '纪录片', '故事']
+                    },
+                    {
+                        id: 'video-4',
+                        title: '5分钟快速释放冥想',
+                        description: '适合忙碌人士的快速释放冥想，随时随地都可以练习。',
+                        videoType: 'local',
+                        videoUrl: 'resources/meditation.mp4',
+                        thumbnail: 'https://images.unsplash.com/photo-1508672019048-805c876b67e2?w=640&h=360&fit=crop',
+                        duration: '05:00',
+                        tags: ['冥想', '快速', '放松']
+                    },
+                    {
+                        id: 'video-5',
+                        title: '释放愤怒的艺术',
+                        description: '学习如何健康地处理和释放愤怒情绪，不再被愤怒控制。',
+                        videoType: 'bilibili',
+                        videoUrl: 'BV1example456',
+                        thumbnail: 'https://images.unsplash.com/photo-1493836512294-502baa1986e2?w=640&h=360&fit=crop',
+                        duration: '15:20',
+                        tags: ['愤怒', '情绪管理', '教程']
+                    },
+                    {
+                        id: 'video-6',
+                        title: '睡前释放练习',
+                        description: '帮助你放下一天的压力和烦恼，获得深度睡眠的睡前释放引导。',
+                        videoType: 'youtube',
+                        videoUrl: 'https://www.youtube.com/watch?v=sleep123',
+                        thumbnail: 'https://images.unsplash.com/photo-1511295742362-92c96b1cf484?w=640&h=360&fit=crop',
+                        duration: '18:45',
+                        tags: ['睡眠', '放松', '引导']
+                    }
+                ];
+            }
+
+            bindVideoConfigEvents() {
+                // 点击关于应用标题6次显示视频配置
+                document.getElementById('aboutAppTitle').addEventListener('click', () => {
+                    const now = Date.now();
+                    // 如果两次点击间隔超过2秒，重置计数
+                    if (now - this.lastClickTime > 2000) {
+                        this.aboutClickCount = 0;
+                    }
+                    this.lastClickTime = now;
+                    this.aboutClickCount++;
+                    
+                    if (this.aboutClickCount >= 6) {
+                        this.toggleVideoConfigPanel();
+                        this.aboutClickCount = 0;
+                    }
+                });
+
+                // 添加视频按钮
+                document.getElementById('addVideoBtn').addEventListener('click', () => {
+                    this.addNewVideoConfig();
+                });
+
+                // 保存视频配置
+                document.getElementById('saveVideoConfig').addEventListener('click', () => {
+                    this.saveVideoConfigs();
+                });
+
+                // 重置默认配置
+                document.getElementById('resetVideoConfig').addEventListener('click', () => {
+                    this.showConfirmModal('确定要重置为默认视频配置吗？', () => {
+                        this.videoConfigs = this.getDefaultVideoConfigs();
+                        this.renderVideoConfigList();
+                        this.saveVideoConfigs();
+                        this.showSuccessMessage('已重置为默认配置');
+                    });
+                });
+            }
+
+            toggleVideoConfigPanel() {
+                const panel = document.getElementById('videoConfigPanel');
+                if (panel.classList.contains('hidden')) {
+                    panel.classList.remove('hidden');
+                    this.renderVideoConfigList();
+                    this.showSuccessMessage('🎬 开发者模式已启用');
+                    
+                    // 滚动到视频配置面板
+                    panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    
+                    anime({
+                        targets: panel,
+                        opacity: [0, 1],
+                        translateY: [20, 0],
+                        duration: 400,
+                        easing: 'easeOutQuart'
+                    });
+                } else {
+                    panel.classList.add('hidden');
+                }
+            }
+
+            renderVideoConfigList() {
+                const container = document.getElementById('videoConfigList');
+                
+                if (this.videoConfigs.length === 0) {
+                    container.innerHTML = `
+                        <div class="text-center py-8 text-gray-500">
+                            <div class="text-4xl mb-2">🎬</div>
+                            <p>暂无视频配置，点击下方按钮添加</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                container.innerHTML = this.videoConfigs.map((video, index) => `
+                    <div class="bg-white rounded-xl p-4 border border-gray-200 video-config-item" data-index="${index}">
+                        <div class="flex items-start justify-between mb-3">
+                            <div class="flex items-center space-x-2">
+                                <span class="text-lg">${video.videoType === 'youtube' ? '📺' : video.videoType === 'bilibili' ? '📱' : '💾'}</span>
+                                <span class="text-xs px-2 py-0.5 rounded-full ${video.videoType === 'youtube' ? 'bg-red-100 text-red-600' : video.videoType === 'bilibili' ? 'bg-pink-100 text-pink-600' : 'bg-blue-100 text-blue-600'}">
+                                    ${video.videoType === 'youtube' ? 'YouTube' : video.videoType === 'bilibili' ? 'Bilibili' : '本地'}
+                                </span>
+                            </div>
+                            <button class="delete-video-btn text-red-400 hover:text-red-600 text-lg" data-index="${index}">🗑️</button>
+                        </div>
+                        
+                        <div class="space-y-3">
+                            <div>
+                                <label class="block text-xs text-gray-500 mb-1">标题</label>
+                                <input type="text" class="video-title w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300" value="${video.title}" data-index="${index}">
+                            </div>
+                            
+                            <div>
+                                <label class="block text-xs text-gray-500 mb-1">描述</label>
+                                <input type="text" class="video-description w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300" value="${video.description}" data-index="${index}">
+                            </div>
+                            
+                            <div class="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label class="block text-xs text-gray-500 mb-1">视频类型</label>
+                                    <select class="video-type w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300" data-index="${index}">
+                                        <option value="youtube" ${video.videoType === 'youtube' ? 'selected' : ''}>YouTube</option>
+                                        <option value="bilibili" ${video.videoType === 'bilibili' ? 'selected' : ''}>Bilibili</option>
+                                        <option value="local" ${video.videoType === 'local' ? 'selected' : ''}>本地文件</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-xs text-gray-500 mb-1">时长</label>
+                                    <input type="text" class="video-duration w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300" value="${video.duration}" placeholder="00:00" data-index="${index}">
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-xs text-gray-500 mb-1">视频链接/路径</label>
+                                <input type="text" class="video-url w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300" value="${video.videoUrl}" placeholder="YouTube链接 / BV号 / 本地路径" data-index="${index}">
+                            </div>
+                            
+                            <div>
+                                <label class="block text-xs text-gray-500 mb-1">缩略图URL</label>
+                                <input type="text" class="video-thumbnail w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300" value="${video.thumbnail}" placeholder="图片URL" data-index="${index}">
+                            </div>
+                            
+                            <div>
+                                <label class="block text-xs text-gray-500 mb-1">标签（逗号分隔）</label>
+                                <input type="text" class="video-tags w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-orange-300" value="${video.tags.join(', ')}" placeholder="标签1, 标签2, 标签3" data-index="${index}">
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+
+                // 绑定删除按钮事件
+                container.querySelectorAll('.delete-video-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const index = parseInt(e.target.dataset.index);
+                        this.deleteVideoConfig(index);
+                    });
+                });
+
+                // 绑定输入变化事件
+                container.querySelectorAll('input, select').forEach(input => {
+                    input.addEventListener('change', (e) => {
+                        this.updateVideoConfigFromInput(e.target);
+                    });
+                });
+            }
+
+            updateVideoConfigFromInput(input) {
+                const index = parseInt(input.dataset.index);
+                const video = this.videoConfigs[index];
+                
+                if (input.classList.contains('video-title')) {
+                    video.title = input.value;
+                } else if (input.classList.contains('video-description')) {
+                    video.description = input.value;
+                } else if (input.classList.contains('video-type')) {
+                    video.videoType = input.value;
+                } else if (input.classList.contains('video-duration')) {
+                    video.duration = input.value;
+                } else if (input.classList.contains('video-url')) {
+                    video.videoUrl = input.value;
+                } else if (input.classList.contains('video-thumbnail')) {
+                    video.thumbnail = input.value;
+                } else if (input.classList.contains('video-tags')) {
+                    video.tags = input.value.split(',').map(t => t.trim()).filter(t => t);
+                }
+            }
+
+            addNewVideoConfig() {
+                const newVideo = {
+                    id: 'video-' + Date.now(),
+                    title: '新视频',
+                    description: '视频描述',
+                    videoType: 'youtube',
+                    videoUrl: '',
+                    thumbnail: 'https://via.placeholder.com/640x360/1a1a1a/ffffff?text=Video',
+                    duration: '00:00',
+                    tags: ['新视频']
+                };
+                
+                this.videoConfigs.push(newVideo);
+                this.renderVideoConfigList();
+                
+                // 滚动到新添加的视频配置
+                const container = document.getElementById('videoConfigList');
+                container.lastElementChild?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+
+            deleteVideoConfig(index) {
+                this.showConfirmModal('确定要删除这个视频配置吗？', () => {
+                    this.videoConfigs.splice(index, 1);
+                    this.renderVideoConfigList();
+                    this.showSuccessMessage('视频配置已删除');
+                });
+            }
+
+            saveVideoConfigs() {
+                localStorage.setItem('wisdomVideoConfigs', JSON.stringify(this.videoConfigs));
+                this.showSuccessMessage('视频配置已保存');
+            }
+        }
+
+        // 初始化应用
+        document.addEventListener('DOMContentLoaded', () => {
+            const app = new SettingsApp();
+            app.initApiSettings();
+            app.bindApiEvents();
+            app.initUserInfo();
+            app.bindUserInfoEvents();
+            app.initVideoConfig();
+            app.bindVideoConfigEvents();
+        });
+    </script>
+
+    <!-- 移动端底部导航 -->
+    <nav class="mobile-nav">
+        <a href="index.html">
+            <span class="text-sm font-medium">释放</span>
+        </a>
+        <a href="journal.html">
+            <span class="text-sm font-medium">日记</span>
+        </a>
+        <a href="wisdom.html">
+            <span class="text-sm font-medium">智慧</span>
+        </a>
+        <a href="chat.html">
+            <span class="text-sm font-medium">对话</span>
+        </a>
+        <a href="settings.html" class="active">
+            <span class="text-sm font-medium">设置</span>
+        </a>
+    </nav>
+
+    <!-- 背景音乐 -->
+    <audio id="backgroundMusic" loop preload="auto" volume="0.3">
+        <source src="./resources/back.mp4" type="video/mp4">
+    </audio>
+</body>
+</html>

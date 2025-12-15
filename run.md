@@ -1,0 +1,1 @@
+cd "/Users/freedak/Documents/go-new/释放日记" && python3 -m http.server 8000
