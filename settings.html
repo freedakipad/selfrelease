@@ -68,6 +68,13 @@
         input:checked + .slider:before {
             transform: translateX(26px);
         }
+        
+        /* 性别选择样式 */
+        .gender-radio:checked + .gender-btn {
+            border-color: #F97316 !important;
+            background: linear-gradient(135deg, rgba(249, 115, 22, 0.1), rgba(236, 72, 153, 0.1));
+        }
+        
         .range-slider {
             -webkit-appearance: none;
             appearance: none;
@@ -208,22 +215,38 @@
                                    class="w-full px-3 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-orange-300 text-sm">
                         </div>
                         
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div class="setting-item p-3 rounded-lg">
-                                <h4 class="font-semibold text-gray-800 mb-2 text-sm">性别</h4>
-                                <select id="userGender" class="w-full px-3 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-orange-300 text-sm">
-                                    <option value="">请选择</option>
-                                    <option value="male">男</option>
-                                    <option value="female">女</option>
-                                    <option value="other">其他</option>
-                                </select>
+                        <div class="setting-item p-3 rounded-lg mb-3">
+                            <h4 class="font-semibold text-gray-800 mb-2 text-sm">性别</h4>
+                            <div class="flex gap-3">
+                                <label class="gender-option flex-1 cursor-pointer">
+                                    <input type="radio" name="userGender" value="male" class="hidden gender-radio">
+                                    <div class="gender-btn px-4 py-2 rounded-lg border-2 border-gray-300 text-center transition-all hover:border-orange-300">
+                                        <span class="text-2xl">👨</span>
+                                        <div class="text-sm font-medium text-gray-700">男</div>
+                                    </div>
+                                </label>
+                                <label class="gender-option flex-1 cursor-pointer">
+                                    <input type="radio" name="userGender" value="female" class="hidden gender-radio">
+                                    <div class="gender-btn px-4 py-2 rounded-lg border-2 border-gray-300 text-center transition-all hover:border-orange-300">
+                                        <span class="text-2xl">👩</span>
+                                        <div class="text-sm font-medium text-gray-700">女</div>
+                                    </div>
+                                </label>
+                                <label class="gender-option flex-1 cursor-pointer">
+                                    <input type="radio" name="userGender" value="other" class="hidden gender-radio">
+                                    <div class="gender-btn px-4 py-2 rounded-lg border-2 border-gray-300 text-center transition-all hover:border-orange-300">
+                                        <span class="text-2xl">🌈</span>
+                                        <div class="text-sm font-medium text-gray-700">其他</div>
+                                    </div>
+                                </label>
                             </div>
-                            
-                            <div class="setting-item p-3 rounded-lg">
-                                <h4 class="font-semibold text-gray-800 mb-2 text-sm">生日</h4>
-                                <input type="date" id="userBirthday" 
-                                       class="w-full px-3 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-orange-300 text-sm">
-                            </div>
+                        </div>
+                        
+                        <div class="setting-item p-3 rounded-lg">
+                            <h4 class="font-semibold text-gray-800 mb-2 text-sm">生日</h4>
+                            <input type="text" id="userBirthday" placeholder="例如：1990-01-01"
+                                   class="w-full px-3 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-orange-300 text-sm">
+                            <p class="text-xs text-gray-500 mt-1">格式：年-月-日，如 1990-01-01</p>
                         </div>
                         
                         <div class="setting-item p-3 rounded-lg">
@@ -1019,7 +1042,10 @@
                 const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
                 
                 if (userInfo.nickname) document.getElementById('userNickname').value = userInfo.nickname;
-                if (userInfo.gender) document.getElementById('userGender').value = userInfo.gender;
+                if (userInfo.gender) {
+                    const genderRadio = document.querySelector(`input[name="userGender"][value="${userInfo.gender}"]`);
+                    if (genderRadio) genderRadio.checked = true;
+                }
                 if (userInfo.birthday) document.getElementById('userBirthday').value = userInfo.birthday;
                 if (userInfo.occupation) document.getElementById('userOccupation').value = userInfo.occupation;
             }
@@ -1031,10 +1057,19 @@
             }
 
             saveUserInfo() {
+                const genderRadio = document.querySelector('input[name="userGender"]:checked');
+                const birthday = document.getElementById('userBirthday').value.trim();
+                
+                // 验证生日格式
+                if (birthday && !/^\d{4}-\d{2}-\d{2}$/.test(birthday)) {
+                    alert('生日格式不正确，请使用 YYYY-MM-DD 格式，例如：1990-01-01');
+                    return;
+                }
+                
                 const userInfo = {
                     nickname: document.getElementById('userNickname').value.trim(),
-                    gender: document.getElementById('userGender').value,
-                    birthday: document.getElementById('userBirthday').value,
+                    gender: genderRadio ? genderRadio.value : '',
+                    birthday: birthday,
                     occupation: document.getElementById('userOccupation').value.trim()
                 };
                 

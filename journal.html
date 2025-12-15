@@ -42,6 +42,14 @@
             color: white;
             transform: scale(1.1);
         }
+        
+        /* 时间范围按钮样式 */
+        .time-range-btn.active {
+            background: linear-gradient(135deg, rgba(168, 85, 247, 0.2), rgba(99, 102, 241, 0.2));
+            border-color: #A855F7 !important;
+            color: #7C3AED !important;
+            font-weight: 600;
+        }
         .milestone-badge {
             animation: pulse 2s infinite;
         }
@@ -357,16 +365,24 @@
         <section class="py-6 px-6">
             <div class="max-w-6xl mx-auto">
                 <div class="glass-effect rounded-2xl p-6 border border-white/30">
-                    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
+                    <div class="flex flex-col gap-4 mb-4">
                         <h3 class="serif-font text-2xl font-bold text-gray-800">AI情绪分析</h3>
-                        <div class="flex flex-wrap items-center gap-3">
-                            <select id="analysisTimeRange" class="px-4 py-2 rounded-full border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-300 text-sm">
-                                <option value="all">全部时间</option>
-                                <option value="week">最近一周</option>
-                                <option value="month">最近一月</option>
-                                <option value="quarter">最近三月</option>
-                            </select>
-                            <button id="aiAnalysisBtn" class="bg-gradient-to-r from-purple-400 to-indigo-400 text-white px-6 py-2 rounded-full font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 text-sm">
+                        <div class="flex flex-col md:flex-row gap-3">
+                            <div class="flex flex-wrap gap-2">
+                                <button class="time-range-btn px-4 py-2 rounded-full border-2 border-purple-300 text-purple-600 text-sm font-medium transition-all hover:bg-purple-50 active" data-range="all">
+                                    全部时间
+                                </button>
+                                <button class="time-range-btn px-4 py-2 rounded-full border-2 border-purple-300 text-purple-600 text-sm font-medium transition-all hover:bg-purple-50" data-range="week">
+                                    最近一周
+                                </button>
+                                <button class="time-range-btn px-4 py-2 rounded-full border-2 border-purple-300 text-purple-600 text-sm font-medium transition-all hover:bg-purple-50" data-range="month">
+                                    最近一月
+                                </button>
+                                <button class="time-range-btn px-4 py-2 rounded-full border-2 border-purple-300 text-purple-600 text-sm font-medium transition-all hover:bg-purple-50" data-range="quarter">
+                                    最近三月
+                                </button>
+                            </div>
+                            <button id="aiAnalysisBtn" class="bg-gradient-to-r from-purple-400 to-indigo-400 text-white px-6 py-2 rounded-full font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 text-sm whitespace-nowrap">
                                 生成分析报告
                             </button>
                         </div>
@@ -480,6 +496,7 @@
                 this.releases = JSON.parse(localStorage.getItem('sedonaReleases') || '[]');
                 this.journalEntries = JSON.parse(localStorage.getItem('journalEntries') || '[]');
                 this.currentAnalysis = null; // 存储当前分析结果用于复制
+                this.selectedTimeRange = 'all'; // 默认选择全部时间
                 
                 this.init();
             }
@@ -512,6 +529,15 @@
                     this.renderCalendar();
                 });
 
+                // 时间范围按钮切换
+                document.querySelectorAll('.time-range-btn').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        document.querySelectorAll('.time-range-btn').forEach(b => b.classList.remove('active'));
+                        btn.classList.add('active');
+                        this.selectedTimeRange = btn.dataset.range;
+                    });
+                });
+                
                 // AI分析
                 document.getElementById('aiAnalysisBtn').addEventListener('click', () => {
                     this.generateAIAnalysis();
@@ -1132,7 +1158,7 @@
 
                 try {
                     // 准备分析数据
-                    const timeRange = document.getElementById('analysisTimeRange').value;
+                    const timeRange = this.selectedTimeRange;
                     const analysisData = this.prepareAnalysisData(timeRange);
                     
                     // 获取API配置
