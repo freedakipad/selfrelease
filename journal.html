@@ -10,16 +10,17 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/echarts/5.4.0/echarts.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/dompurify@3.1.2/dist/purify.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&family=ZCOOL+XiaoWei&family=Long+Cang&family=Noto+Sans+SC:wght@300;400;500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&family=Noto+Serif+SC:wght@300;400;500;600&family=Noto+Sans+SC:wght@300;400;500&display=swap" rel="stylesheet">
     <script src="music.js"></script>
     <script src="navbar.js"></script>
     <style>
         body {
-            font-family: 'ZCOOL XiaoWei', 'Noto Sans SC', sans-serif;
+            font-family: 'Noto Serif SC', 'Noto Sans SC', serif;
+            font-size: 15px;
             background-color: #F5F1EB;
         }
         .serif-font {
-            font-family: 'Ma Shan Zheng', 'Long Cang', cursive;
+            font-family: 'Ma Shan Zheng', cursive;
         }
         .glass-effect {
             backdrop-filter: blur(10px);
@@ -227,40 +228,7 @@
     </style>
 </head>
 <body class="min-h-screen">
-    <!-- 导航栏 -->
-    <nav id="topNav" class="fixed top-0 left-0 right-0 z-50 glass-effect border-b border-white/20">
-        <div class="max-w-6xl mx-auto px-6 py-3">
-            <div class="flex items-center justify-between">
-                <div class="flex items-center space-x-3">
-                    <div class="w-10 h-10 rounded-full bg-gradient-to-br from-orange-200 to-pink-200 flex items-center justify-center">
-                        <span class="text-2xl">🕊️</span>
-                    </div>
-                    <h1 class="serif-font text-2xl font-bold text-gray-700">自在释放</h1>
-                </div>
-                <div class="flex items-center space-x-8">
-                    <a href="index.html" class="text-gray-600 font-semibold hover:text-orange-500 transition-colors">释放</a>
-                    <a href="journal.html" class="text-gray-800 font-semibold">日记</a>
-                    <a href="wisdom.html" class="text-gray-600 font-semibold hover:text-orange-500 transition-colors">智慧</a>
-                    <a href="chat.html" class="text-gray-600 font-semibold hover:text-orange-500 transition-colors">对话</a>
-                    <a href="settings.html" class="text-gray-600 font-semibold hover:text-orange-500 transition-colors">设置</a>
-                </div>
-                <!-- 音乐控制按钮 - 独立显示，移动端也可见 -->
-                <button id="musicControlBtn" title="背景音乐" aria-label="播放/暂停背景音乐">
-                    <span id="musicIcon" class="text-gray-700">
-                        <!-- 播放图标 -->
-                        <svg id="playIcon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M8 5V19L19 12L8 5Z" fill="currentColor"/>
-                        </svg>
-                        <!-- 暂停图标 -->
-                        <svg id="pauseIcon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="display: none;">
-                            <rect x="6" y="4" width="4" height="16" fill="currentColor"/>
-                            <rect x="14" y="4" width="4" height="16" fill="currentColor"/>
-                        </svg>
-                    </span>
-                </button>
-            </div>
-        </div>
-    </nav>
+    <!-- 导航栏由 navbar.js 动态生成 -->
 
     <!-- 主要内容 -->
     <main class="pt-16">

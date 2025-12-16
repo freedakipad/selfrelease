@@ -47,23 +47,29 @@
                     </div>
                     <h1 class="serif-font text-2xl font-bold text-gray-700">自在释放</h1>
                 </div>
-                <div class="flex items-center space-x-8">
+                <div class="hidden md:flex items-center space-x-8">
                     ${navLinks}
                 </div>
-                <!-- 音乐控制按钮 - 独立显示，移动端也可见 -->
-                <button id="musicControlBtn" title="背景音乐" aria-label="播放/暂停背景音乐">
-                    <span id="musicIcon" class="text-gray-700">
-                        <!-- 播放图标 -->
-                        <svg id="playIcon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M8 5V19L19 12L8 5Z" fill="currentColor"/>
-                        </svg>
-                        <!-- 暂停图标 -->
-                        <svg id="pauseIcon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="display: none;">
-                            <rect x="6" y="4" width="4" height="16" fill="currentColor"/>
-                            <rect x="14" y="4" width="4" height="16" fill="currentColor"/>
-                        </svg>
-                    </span>
-                </button>
+                <div class="flex items-center space-x-3">
+                    <!-- 帮助按钮 -->
+                    <button id="helpBtn" title="使用帮助" aria-label="查看使用帮助" class="w-11 h-11 rounded-full bg-white/80 hover:bg-white flex items-center justify-center transition-all shadow-md border border-orange-200">
+                        <span class="text-xl">❓</span>
+                    </button>
+                    <!-- 音乐控制按钮 -->
+                    <button id="musicControlBtn" title="背景音乐" aria-label="播放/暂停背景音乐">
+                        <span id="musicIcon" class="text-gray-700">
+                            <!-- 播放图标 -->
+                            <svg id="playIcon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M8 5V19L19 12L8 5Z" fill="currentColor"/>
+                            </svg>
+                            <!-- 暂停图标 -->
+                            <svg id="pauseIcon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="display: none;">
+                                <rect x="6" y="4" width="4" height="16" fill="currentColor"/>
+                                <rect x="14" y="4" width="4" height="16" fill="currentColor"/>
+                            </svg>
+                        </span>
+                    </button>
+                </div>
             </div>
         </div>
     </nav>`;
@@ -80,6 +86,16 @@
         style.id = styleId;
         style.textContent = `
         /* 导航栏样式 - 统一组件样式，优先级最高 */
+        nav#topNav {
+            font-family: 'Noto Serif SC', 'Noto Sans SC', serif;
+            font-size: 16px;
+        }
+        nav#topNav .serif-font {
+            font-family: 'Ma Shan Zheng', cursive;
+        }
+        nav#topNav a {
+            font-size: 16px;
+        }
         nav.glass-effect {
             backdrop-filter: blur(10px);
             background: rgba(245, 241, 235, 0.8);
@@ -154,6 +170,44 @@
                 height: 18px !important;
             }
         }
+        
+        /* 底部导航栏统一样式 */
+        .mobile-nav {
+            display: none;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(245, 241, 235, 0.95);
+            backdrop-filter: blur(10px);
+            border-top: 1px solid rgba(255,255,255,0.3);
+            padding: 8px 0;
+            z-index: 50;
+            font-family: 'Noto Serif SC', 'Noto Sans SC', serif;
+        }
+        .mobile-nav a {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 8px 6px;
+            color: #6B7280;
+            font-size: 12px;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+        .mobile-nav a.active {
+            color: #F97316;
+        }
+        .mobile-nav a:hover {
+            color: #F97316;
+        }
+        @media (max-width: 768px) {
+            .mobile-nav {
+                display: flex !important;
+            }
+        }
         `;
         document.head.appendChild(style);
     }
@@ -174,6 +228,8 @@
         const existingNav = document.querySelector('nav#topNav, nav.fixed.top-0, nav.top-nav, nav[class*="glass-effect"]');
         if (existingNav) {
             existingNav.outerHTML = generateNavbar();
+            // 绑定帮助按钮事件
+            bindHelpButton();
             return;
         }
 
@@ -208,6 +264,54 @@
         if (!commentFound) {
             body.insertAdjacentHTML('afterbegin', generateNavbar());
         }
+        
+        // 绑定帮助按钮事件
+        bindHelpButton();
+    }
+    
+    // 绑定帮助按钮事件
+    function bindHelpButton() {
+        const helpBtn = document.getElementById('helpBtn');
+        const helpModal = document.getElementById('helpModal');
+        const closeHelpBtn = document.getElementById('closeHelpBtn');
+        
+        if (!helpBtn) return;
+        
+        // 打开帮助弹窗
+        helpBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            if (helpModal) {
+                helpModal.classList.remove('hidden');
+                document.body.style.overflow = 'hidden';
+            }
+        });
+        
+        // 关闭帮助弹窗
+        if (closeHelpBtn) {
+            closeHelpBtn.addEventListener('click', function() {
+                helpModal.classList.add('hidden');
+                document.body.style.overflow = '';
+            });
+        }
+        
+        // 点击背景关闭
+        if (helpModal) {
+            helpModal.addEventListener('click', function(e) {
+                if (e.target === helpModal) {
+                    helpModal.classList.add('hidden');
+                    document.body.style.overflow = '';
+                }
+            });
+        }
+        
+        // ESC 键关闭
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && helpModal && !helpModal.classList.contains('hidden')) {
+                helpModal.classList.add('hidden');
+                document.body.style.overflow = '';
+            }
+        });
     }
 
     // 确保在 DOM 完全加载后执行

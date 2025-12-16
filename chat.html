@@ -9,11 +9,11 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/dompurify@3.1.2/dist/purify.min.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&family=ZCOOL+XiaoWei&family=Long+Cang&family=Noto+Sans+SC:wght@300;400;500&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&family=Noto+Serif+SC:wght@300;400;500;600&family=Noto+Sans+SC:wght@300;400;500&display=swap" rel="stylesheet" />
     <style>
     :root{ --safe-bottom: env(safe-area-inset-bottom, 0px); --dock-height: 0px; --chat-height: 60vh; }
-    body { font-family:'ZCOOL XiaoWei', 'Noto Sans SC', sans-serif; background:#F5F1EB; }
-    .serif-font { font-family:'Ma Shan Zheng', 'Long Cang', cursive; }
+    body { font-family:'Noto Serif SC', 'Noto Sans SC', serif; font-size:15px; background:#F5F1EB; }
+    .serif-font { font-family:'Ma Shan Zheng', cursive; }
     .glass { backdrop-filter: blur(10px); background: rgba(245,241,235,.86); }
     /* 统一顶部导航玻璃效果 */
     .glass-effect {
@@ -890,18 +890,30 @@
         this.checkDoubaoConfig();
       }
 
+      // 检测是否需要使用代理（非 localhost 环境）
+      shouldUseProxy() {
+        const host = window.location.hostname;
+        return host !== 'localhost' && host !== '127.0.0.1' && !host.startsWith('192.168.');
+      }
+
       // 获取API配置
       getApiConfig() {
         // 如果没有配置，使用豆包默认配置
-        const endpoint = localStorage.getItem('aiApiEndpoint');
+        const originalEndpoint = localStorage.getItem('aiApiEndpoint') || 'https://ark.cn-beijing.volces.com/api/v3/chat/completions';
         const apiKey = localStorage.getItem('aiApiKey');
         const model = localStorage.getItem('aiApiModel');
         
+        // 判断是否使用代理
+        const useProxy = this.shouldUseProxy() && originalEndpoint.includes('volces.com');
+        const endpoint = useProxy ? '/api/chat' : originalEndpoint;
+        
         return {
-          endpoint: endpoint || 'https://ark.cn-beijing.volces.com/api/v3/chat/completions',
+          endpoint: endpoint,
+          originalEndpoint: originalEndpoint,
           apiKey: apiKey || '',
           model: model || 'doubao-seed-1-6-251015',
-          apiType: endpoint?.includes('volces.com') ? 'doubao' : 'openai'
+          apiType: originalEndpoint?.includes('volces.com') ? 'doubao' : 'openai',
+          useProxy: useProxy
         };
       }
 
@@ -913,8 +925,11 @@
         
         if (!notice || !message) return true;
         
+        // 使用 originalEndpoint 检查（因为代理模式下 endpoint 会变成 /api/chat）
+        const actualEndpoint = config.originalEndpoint || config.endpoint;
+        
         // 检查是否是豆包配置
-        const isDoubao = config.endpoint?.includes('volces.com') || config.model?.includes('doubao');
+        const isDoubao = actualEndpoint?.includes('volces.com') || config.model?.includes('doubao');
         
         if (!isDoubao) {
           // 如果不是豆包配置，不显示提示
@@ -929,7 +944,7 @@
           issues.push('缺少 API 密钥');
         }
         
-        if (!config.endpoint || !config.endpoint.includes('volces.com')) {
+        if (!actualEndpoint || !actualEndpoint.includes('volces.com')) {
           issues.push('API 端点不正确，应为 volces.com 域名');
         }
         
@@ -950,9 +965,10 @@
       // 发送消息到AI
       async sendToAI(userMessage) {
         const config = this.getApiConfig();
+        const actualEndpoint = config.originalEndpoint || config.endpoint;
         
         // 检查豆包配置
-        if (config.endpoint?.includes('volces.com') || config.model?.includes('doubao')) {
+        if (actualEndpoint?.includes('volces.com') || config.model?.includes('doubao')) {
           const configValid = this.checkDoubaoConfig();
           if (!configValid) {
             // 配置不正确，不发送请求
@@ -1008,16 +1024,20 @@
             'Content-Type': 'application/json'
           };
 
-          // 豆包API使用Authorization Bearer格式
-          if (config.apiType === 'doubao') {
-            headers['Authorization'] = `Bearer ${config.apiKey}`;
+          // 根据是否使用代理，设置不同的请求头
+          if (config.useProxy) {
+            // 使用代理时，通过自定义头传递 API 密钥和原始端点
+            headers['X-API-Key'] = config.apiKey;
+            headers['X-API-Endpoint'] = config.originalEndpoint;
           } else {
+            // 直接调用时使用 Authorization
             headers['Authorization'] = `Bearer ${config.apiKey}`;
           }
 
           console.log('[AI] 发送请求到:', config.endpoint);
           console.log('[AI] 使用模型:', config.model);
           console.log('[AI] API类型:', config.apiType);
+          console.log('[AI] 使用代理:', config.useProxy);
           
           const response = await fetch(config.endpoint, {
             method: 'POST',

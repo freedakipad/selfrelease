@@ -9,23 +9,35 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&family=ZCOOL+XiaoWei&family=Long+Cang&family=Noto+Sans+SC:wght@300;400;500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&family=Noto+Serif+SC:wght@300;400;500;600&family=Noto+Sans+SC:wght@300;400;500&display=swap" rel="stylesheet">
     <script src="music.js"></script>
     <script src="navbar.js"></script>
     <style>
         body {
-            font-family: 'ZCOOL XiaoWei', 'Noto Sans SC', sans-serif;
+            font-family: 'Noto Serif SC', 'Noto Sans SC', serif;
+            font-size: 15px;
             background-color: #F5F1EB;
             overflow-x: hidden;
         }
         .serif-font {
-            font-family: 'Ma Shan Zheng', 'Long Cang', cursive;
+            font-family: 'Ma Shan Zheng', cursive;
         }
         .hero-bg {
             background-image: url('./resources/app-background.png');
             background-size: cover;
             background-position: center;
             background-attachment: fixed;
+        }
+        /* 首页高度适应 - 桌面端减去顶部导航，移动端还要减去底部导航 */
+        .hero-height {
+            min-height: calc(100vh - 64px);
+            height: calc(100vh - 64px);
+        }
+        @media (max-width: 768px) {
+            .hero-height {
+                min-height: calc(100vh - 64px - 60px);
+                height: calc(100vh - 64px - 60px);
+            }
         }
         .glass-effect {
             backdrop-filter: blur(10px);
@@ -222,35 +234,7 @@
         }
         
         /* 移动端底部导航 */
-        .mobile-nav {
-            display: none;
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background: rgba(245, 241, 235, 0.95);
-            backdrop-filter: blur(10px);
-            border-top: 1px solid rgba(255,255,255,0.3);
-            padding: 8px 0;
-            z-index: 50;
-        }
-        .mobile-nav a {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 6px;
-            color: #6B7280;
-            font-size: 10px;
-            text-decoration: none;
-        }
-        .mobile-nav a.active {
-            color: #F97316;
-        }
-        .mobile-nav a span:first-child {
-            font-size: 20px;
-            margin-bottom: 2px;
-        }
+        /* 底部导航栏样式由 navbar.js 统一定义 */
         /* 加载提示 */
         .loading-overlay {
             position: fixed;
@@ -306,45 +290,12 @@
     <!-- 粒子背景 -->
     <div id="particle-container" class="particle-bg"></div>
     
-    <!-- 导航栏 -->
-    <nav id="topNav" class="fixed top-0 left-0 right-0 z-50 glass-effect border-b border-white/20">
-        <div class="max-w-6xl mx-auto px-6 py-3">
-            <div class="flex items-center justify-between">
-                <div class="flex items-center space-x-3">
-                    <div class="w-10 h-10 rounded-full bg-gradient-to-br from-orange-200 to-pink-200 flex items-center justify-center">
-                        <span class="text-2xl">🕊️</span>
-                    </div>
-                    <h1 class="serif-font text-2xl font-bold text-gray-700">自在释放</h1>
-                </div>
-                <div class="flex items-center space-x-8">
-                    <a href="index.html" class="text-gray-800 font-semibold">释放</a>
-                    <a href="journal.html" class="text-gray-600 font-semibold hover:text-orange-500 transition-colors">日记</a>
-                    <a href="wisdom.html" class="text-gray-600 font-semibold hover:text-orange-500 transition-colors">智慧</a>
-                    <a href="chat.html" class="text-gray-600 font-semibold hover:text-orange-500 transition-colors">对话</a>
-                    <a href="settings.html" class="text-gray-600 font-semibold hover:text-orange-500 transition-colors">设置</a>
-                </div>
-                <!-- 音乐控制按钮 - 独立显示，移动端也可见 -->
-                <button id="musicControlBtn" title="背景音乐" aria-label="播放/暂停背景音乐">
-                    <span id="musicIcon" class="text-gray-700">
-                        <!-- 播放图标 -->
-                        <svg id="playIcon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M8 5V19L19 12L8 5Z" fill="currentColor"/>
-                        </svg>
-                        <!-- 暂停图标 -->
-                        <svg id="pauseIcon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="display: none;">
-                            <rect x="6" y="4" width="4" height="16" fill="currentColor"/>
-                            <rect x="14" y="4" width="4" height="16" fill="currentColor"/>
-                        </svg>
-                    </span>
-                </button>
-            </div>
-        </div>
-    </nav>
+    <!-- 导航栏由 navbar.js 动态生成 -->
 
     <!-- 主要内容 -->
     <main class="pt-16">
         <!-- Hero区域 -->
-        <section id="heroSection" class="hero-bg flex items-center justify-center relative" style="min-height: calc(100vh - 64px);">
+        <section id="heroSection" class="hero-bg flex items-center justify-center relative hero-height">
             <div class="absolute inset-0 bg-gradient-to-b from-transparent to-orange-50/30"></div>
             <div class="relative z-10 text-center max-w-6xl mx-auto px-6">
                 <div class="mb-3 md:mb-4">
@@ -732,6 +683,107 @@
         </a>
     </nav>
 
+    <!-- 帮助弹窗 -->
+    <div id="helpModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-[100] hidden">
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="bg-white/95 backdrop-blur-lg rounded-2xl max-w-md w-full shadow-2xl">
+                <!-- 弹窗头部 -->
+                <div class="bg-gradient-to-r from-orange-400 to-pink-400 px-5 py-3 flex items-center justify-between rounded-t-2xl">
+                    <h3 class="serif-font text-lg font-bold text-white">📖 使用指南</h3>
+                    <button id="closeHelpBtn" class="w-7 h-7 rounded-full bg-white/20 hover:bg-white/40 flex items-center justify-center">
+                        <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+                <!-- 弹窗内容 -->
+                <div class="px-5 py-4 overflow-y-auto max-h-[70vh]">
+                    <!-- 简介 -->
+                    <div class="text-center mb-4 pb-3 border-b border-gray-100">
+                        <p class="text-sm text-gray-600">
+                            「自在释放」基于<strong class="text-orange-600">圣多纳释放法</strong>，<br>
+                            帮助你释放负面情绪，找回内心的平静与自由。
+                        </p>
+                    </div>
+                    
+                    <!-- 功能模块 -->
+                    <div class="space-y-2 mb-4">
+                        <div class="flex items-start space-x-3 p-2.5 bg-orange-50 rounded-xl">
+                            <span class="text-xl">🕊️</span>
+                            <div>
+                                <h4 class="font-bold text-gray-800 text-sm">释放</h4>
+                                <p class="text-xs text-gray-500">选择情绪，通过四个问题引导释放</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start space-x-3 p-2.5 bg-pink-50 rounded-xl">
+                            <span class="text-xl">📔</span>
+                            <div>
+                                <h4 class="font-bold text-gray-800 text-sm">日记</h4>
+                                <p class="text-xs text-gray-500">记录释放过程，追踪情绪变化</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start space-x-3 p-2.5 bg-purple-50 rounded-xl">
+                            <span class="text-xl">📚</span>
+                            <div>
+                                <h4 class="font-bold text-gray-800 text-sm">智慧</h4>
+                                <p class="text-xs text-gray-500">学习释放法原理和莱斯特的智慧</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start space-x-3 p-2.5 bg-blue-50 rounded-xl">
+                            <span class="text-xl">💬</span>
+                            <div>
+                                <h4 class="font-bold text-gray-800 text-sm">对话</h4>
+                                <p class="text-xs text-gray-500">与 AI 莱斯特对话，获得指导</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 重要：设置说明 -->
+                    <div class="p-3 bg-gradient-to-br from-red-50 to-orange-50 rounded-xl mb-3 border-2 border-orange-300">
+                        <h4 class="font-bold text-orange-700 mb-2 text-sm flex items-center">
+                            <span class="mr-1">⚙️</span> 重要：首次使用请先设置
+                        </h4>
+                        <ul class="text-xs text-gray-600 space-y-1">
+                            <li>• <strong>AI 对话功能</strong>需要配置 API 密钥</li>
+                            <li>• 前往「<a href="settings.html" class="text-orange-600 underline font-bold">设置</a>」页面填写 API 信息</li>
+                            <li>• 支持豆包（火山引擎）等 AI 服务</li>
+                        </ul>
+                    </div>
+                    
+                    <!-- 释放四问 -->
+                    <div class="p-3 bg-gradient-to-br from-orange-100 to-pink-100 rounded-xl mb-3">
+                        <h4 class="font-bold text-gray-800 mb-2 text-sm text-center">🌟 释放核心四问</h4>
+                        <ol class="text-xs text-gray-700 space-y-1.5">
+                            <li class="flex items-center">
+                                <span class="w-5 h-5 rounded-full bg-orange-400 text-white text-xs flex items-center justify-center mr-2 flex-shrink-0">1</span>
+                                你能允许这个情绪存在吗？
+                            </li>
+                            <li class="flex items-center">
+                                <span class="w-5 h-5 rounded-full bg-orange-400 text-white text-xs flex items-center justify-center mr-2 flex-shrink-0">2</span>
+                                你能放下它吗？
+                            </li>
+                            <li class="flex items-center">
+                                <span class="w-5 h-5 rounded-full bg-orange-400 text-white text-xs flex items-center justify-center mr-2 flex-shrink-0">3</span>
+                                你愿意放下它吗？
+                            </li>
+                            <li class="flex items-center">
+                                <span class="w-5 h-5 rounded-full bg-orange-400 text-white text-xs flex items-center justify-center mr-2 flex-shrink-0">4</span>
+                                什么时候放下？— 现在！
+                            </li>
+                        </ol>
+                    </div>
+                    
+                    <!-- 小贴士 -->
+                    <div class="bg-gray-50 rounded-lg p-3">
+                        <p class="text-xs text-gray-500 text-center">
+                            💡 <strong>小贴士</strong>：回答「是」或「否」都可以，<br>重要的是诚实面对自己的感受
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- 背景音乐 -->
     <audio id="backgroundMusic" loop preload="auto" volume="0.3">
         <!-- 主要源：本地视频文件（作为音频播放） -->
@@ -741,6 +793,41 @@
     <script>
         // 确保音乐管理器在 main.js 之前初始化
         // main.js 中的音乐管理将被 music.js 覆盖
+        
+        // 帮助弹窗功能
+        document.addEventListener('DOMContentLoaded', function() {
+            const helpBtn = document.getElementById('helpBtn');
+            const helpModal = document.getElementById('helpModal');
+            const closeHelpBtn = document.getElementById('closeHelpBtn');
+            
+            // 打开帮助弹窗
+            helpBtn?.addEventListener('click', function() {
+                helpModal.classList.remove('hidden');
+                document.body.style.overflow = 'hidden';
+            });
+            
+            // 关闭帮助弹窗
+            closeHelpBtn?.addEventListener('click', function() {
+                helpModal.classList.add('hidden');
+                document.body.style.overflow = '';
+            });
+            
+            // 点击背景关闭
+            helpModal?.addEventListener('click', function(e) {
+                if (e.target === helpModal) {
+                    helpModal.classList.add('hidden');
+                    document.body.style.overflow = '';
+                }
+            });
+            
+            // ESC 键关闭
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape' && !helpModal.classList.contains('hidden')) {
+                    helpModal.classList.add('hidden');
+                    document.body.style.overflow = '';
+                }
+            });
+        });
     </script>
     <script src="main.js"></script>
 </body>
